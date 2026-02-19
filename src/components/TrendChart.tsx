@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
 import type { TrendDay } from '@/src/hooks/useTrend';
 import { parseDateLocal } from '@/src/utils/dateUtils';
+import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 
 interface TrendChartProps {
   data: TrendDay[];
@@ -20,7 +20,6 @@ function Bar({ height, isPositive, isEmpty, value }: BarProps) {
   const CHART_HEIGHT = 200; // Match chartContainer height
   const CENTER_Y = CHART_HEIGHT / 2; // 100px
   const BMR_LINE_Y = CENTER_Y - 0.5; // 99.5px (matches BMR line position)
-  const GAP = 2; // 2px gap between bars and BMR line
   
   // Calculate bar height in pixels
   const barHeightPx = (height / 100) * CHART_HEIGHT;
@@ -51,7 +50,7 @@ function Bar({ height, isPositive, isEmpty, value }: BarProps) {
   
   if (isPositive) {
     // Positive: red bar going up from center
-    // Bottom edge should be 2px above the BMR line (BMR_LINE_Y - GAP)
+    // Bottom edge touches the BMR line
     return (
       <View style={styles.barWrapper}>
         <View style={styles.barContainer}>
@@ -61,10 +60,14 @@ function Bar({ height, isPositive, isEmpty, value }: BarProps) {
               styles.barPositive,
               {
                 position: 'absolute',
-                top: (BMR_LINE_Y - GAP) - barHeightPx, // Bottom edge is 2px above BMR line
+                top: BMR_LINE_Y - barHeightPx, // Bottom edge touches BMR line
                 left: 0,
                 right: 0,
                 height: barHeightPx,
+                borderBottomLeftRadius: 0,
+                borderBottomRightRadius: 0,
+                borderTopLeftRadius: 4,
+                borderTopRightRadius: 4,
               },
             ]}
           />
@@ -73,7 +76,7 @@ function Bar({ height, isPositive, isEmpty, value }: BarProps) {
     );
   } else {
     // Negative: green bar going down from center
-    // Top edge should be 2px below the BMR line (BMR_LINE_Y + GAP)
+    // Top edge touches the BMR line
     return (
       <View style={styles.barWrapper}>
         <View style={styles.barContainer}>
@@ -83,10 +86,14 @@ function Bar({ height, isPositive, isEmpty, value }: BarProps) {
               styles.barNegative,
               {
                 position: 'absolute',
-                top: BMR_LINE_Y + GAP, // Top edge is 2px below BMR line
+                top: BMR_LINE_Y, // Top edge touches BMR line
                 left: 0,
                 right: 0,
                 height: barHeightPx,
+                borderTopLeftRadius: 0,
+                borderTopRightRadius: 0,
+                borderBottomLeftRadius: 4,
+                borderBottomRightRadius: 4,
               },
             ]}
           />
