@@ -24,10 +24,17 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="edit"
+        name="calories"
         options={{
-          title: 'Edit',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="pencil" color={color} />,
+          title: 'Calories',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="flame.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="weight"
+        options={{
+          title: 'Weight',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="scalemass.fill" color={color} />,
         }}
       />
     </Tabs>

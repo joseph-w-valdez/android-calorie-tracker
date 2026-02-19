@@ -19,6 +19,8 @@ const MAPPING = {
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
   'pencil': 'edit',
+  'flame.fill': 'local-fire-department',
+  'scalemass.fill': 'monitor-weight',
 } as IconMapping;
 
 /**

@@ -9,6 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import type { Entry } from '@/src/db/schema';
+import { validateRequired, validatePositiveNumber } from '@/src/utils/validators';
 
 interface AddEntryModalProps {
   visible: boolean;
@@ -37,19 +38,19 @@ export function AddEntryModal({ visible, onClose, onSubmit, onDelete, entry }: A
   }, [entry, visible]);
 
   const handleSubmit = () => {
-    const caloriesNum = parseFloat(calories);
-    
-    if (!name.trim()) {
-      Alert.alert('Error', 'Please enter a name');
+    const nameValidation = validateRequired(name.trim(), 'name');
+    if (!nameValidation.valid) {
+      Alert.alert('Error', nameValidation.error);
       return;
     }
 
-    if (isNaN(caloriesNum) || caloriesNum <= 0) {
-      Alert.alert('Error', 'Please enter a valid calorie amount');
+    const caloriesValidation = validatePositiveNumber(calories, 'calorie amount');
+    if (!caloriesValidation.valid) {
+      Alert.alert('Error', caloriesValidation.error);
       return;
     }
 
-    onSubmit(type, name.trim(), caloriesNum, entry?.id);
+    onSubmit(type, name.trim(), parseFloat(calories), entry?.id);
     setName('');
     setCalories('');
     setType('food');

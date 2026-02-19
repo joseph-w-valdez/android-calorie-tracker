@@ -102,20 +102,6 @@ export function WeightChart({ data }: WeightChartProps) {
             />
           ))}
 
-          {/* Y-axis labels */}
-          {yAxisLabels.map((label, i) => (
-            <SvgText
-              key={`y-label-${i}`}
-              x={CHART_PADDING - 8}
-              y={CHART_PADDING + label.y + 4}
-              fill="#666"
-              fontSize="10"
-              textAnchor="end"
-            >
-              {label.value.toFixed(1)}
-            </SvgText>
-          ))}
-
           {/* X-axis labels (weekday abbreviations) */}
           {data.map((day, index) => {
             const dayDate = parseDateLocal(day.date);

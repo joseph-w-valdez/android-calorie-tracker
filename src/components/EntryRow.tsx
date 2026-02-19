@@ -21,32 +21,32 @@ export function EntryRow({ entry, onEdit, onDelete }: EntryRowProps) {
       `"${entry.name}"`,
       [
         { text: 'Cancel', style: 'cancel' },
-        ...(onEdit ? [{
-          text: 'Edit',
-          onPress: () => onEdit(entry),
-        }] : []),
+        ...(onEdit
+          ? [
+              {
+                text: 'Edit',
+                onPress: () => onEdit(entry),
+              },
+            ]
+          : []),
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => onDelete(entry.id),
+          onPress: handleDelete,
         },
       ]
     );
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      'Delete Entry',
-      `Delete "${entry.name}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => onDelete(entry.id),
-        },
-      ]
-    );
+    Alert.alert('Delete Entry', `Delete "${entry.name}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => onDelete(entry.id),
+      },
+    ]);
   };
 
   return (

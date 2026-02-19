@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { db } from '@/src/db/database';
 import type { Entry, Day } from '@/src/db/schema';
+import { generateId } from '@/src/utils/idGenerator';
+import { logError } from '@/src/utils/errorHandler';
 
 interface UseDayResult {
   entries: Entry[];
@@ -36,7 +38,7 @@ export function useDay(date: string, refreshTrigger?: number): UseDayResult {
       }
 
       // Create new day
-      const newDayId = `day_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const newDayId = generateId('day');
       db.runSync('INSERT INTO days (id, date) VALUES (?, ?)', [newDayId, date]);
       
       const newDay: Day = {
@@ -49,7 +51,7 @@ export function useDay(date: string, refreshTrigger?: number): UseDayResult {
       setDayId(newDayId);
       return newDayId;
     } catch (error) {
-      console.error('Error ensuring day:', error);
+      logError('useDay.ensureDay', error);
       throw error;
     }
   }, [date]);
@@ -63,7 +65,7 @@ export function useDay(date: string, refreshTrigger?: number): UseDayResult {
       );
       setEntries(result);
     } catch (error) {
-      console.error('Error loading entries:', error);
+      logError('useDay.loadEntries', error);
     }
   }, []);
 
@@ -79,23 +81,25 @@ export function useDay(date: string, refreshTrigger?: number): UseDayResult {
     }
   }, [dayId, loadEntries, refreshTrigger]);
 
-  // Compute calories
-  const caloriesIn = entries
-    .filter(e => e.type === 'food')
-    .reduce((sum, e) => sum + e.calories, 0);
+  // Compute calories (memoized for performance)
+  const caloriesIn = useMemo(
+    () => entries.filter(e => e.type === 'food').reduce((sum, e) => sum + e.calories, 0),
+    [entries]
+  );
 
-  const caloriesOut = entries
-    .filter(e => e.type === 'exercise')
-    .reduce((sum, e) => sum + e.calories, 0);
+  const caloriesOut = useMemo(
+    () => entries.filter(e => e.type === 'exercise').reduce((sum, e) => sum + e.calories, 0),
+    [entries]
+  );
 
-  const net = caloriesIn - caloriesOut;
+  const net = useMemo(() => caloriesIn - caloriesOut, [caloriesIn, caloriesOut]);
 
   // Add entry
   const addEntry = useCallback((type: 'food' | 'exercise', name: string, calories: number) => {
     const currentDayId = dayId || ensureDay();
     if (!currentDayId) return;
 
-    const entryId = `entry_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const entryId = generateId('entry');
     const createdAt = new Date().toISOString();
 
     try {
@@ -107,7 +111,7 @@ export function useDay(date: string, refreshTrigger?: number): UseDayResult {
       // Reload entries to ensure consistency
       loadEntries(currentDayId);
     } catch (error) {
-      console.error('Error adding entry:', error);
+      logError('useDay.addEntry', error);
     }
   }, [dayId, ensureDay, loadEntries]);
 
@@ -124,7 +128,7 @@ export function useDay(date: string, refreshTrigger?: number): UseDayResult {
       // Reload entries to ensure consistency
       loadEntries(dayId);
     } catch (error) {
-      console.error('Error updating entry:', error);
+      logError('useDay.updateEntry', error);
     }
   }, [dayId, loadEntries]);
 
@@ -138,7 +142,7 @@ export function useDay(date: string, refreshTrigger?: number): UseDayResult {
       // Reload entries to ensure consistency
       loadEntries(dayId);
     } catch (error) {
-      console.error('Error deleting entry:', error);
+      logError('useDay.deleteEntry', error);
     }
   }, [dayId, loadEntries]);
 
@@ -151,7 +155,7 @@ export function useDay(date: string, refreshTrigger?: number): UseDayResult {
       db.runSync('UPDATE days SET weight = ? WHERE id = ?', [weight, currentDayId]);
       setDay(prev => prev ? { ...prev, weight } : null);
     } catch (error) {
-      console.error('Error updating weight:', error);
+      logError('useDay.updateWeight', error);
     }
   }, [dayId, ensureDay]);
 

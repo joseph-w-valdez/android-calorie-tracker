@@ -1,28 +1,30 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  TextInput,
-  Modal,
-  Alert,
-} from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import { useDay } from '@/src/hooks/useDay';
-import { useTrend } from '@/src/hooks/useTrend';
-import { useBMR } from '@/src/hooks/useBMR';
-import { useWeightTrend } from '@/src/hooks/useWeightTrend';
-import { useTargetWeight } from '@/src/hooks/useTargetWeight';
-import { db } from '@/src/db/database';
-import { TrendChart } from '@/src/components/TrendChart';
-import { WeightChart } from '@/src/components/WeightChart';
-import { Calendar } from '@/src/components/Calendar';
-import { WeightCalendar } from '@/src/components/WeightCalendar';
 import { AddEntryModal } from '@/src/components/AddEntryModal';
+import { Calendar } from '@/src/components/Calendar';
+import { TrendChart } from '@/src/components/TrendChart';
+import { BMRModal } from '@/src/components/ui/BMRModal';
+import { TargetWeightModal } from '@/src/components/ui/TargetWeightModal';
+import { WeightCalendar } from '@/src/components/WeightCalendar';
+import { WeightChart } from '@/src/components/WeightChart';
+import { db } from '@/src/db/database';
+import { useBMR } from '@/src/hooks/useBMR';
+import { useDay } from '@/src/hooks/useDay';
+import { useTargetWeight } from '@/src/hooks/useTargetWeight';
+import { useTrend } from '@/src/hooks/useTrend';
+import { useWeightTrend } from '@/src/hooks/useWeightTrend';
+import { formatDateFull, formatDateShort } from '@/src/utils/dateFormatters';
 import { getTodayLocal, parseDateLocal } from '@/src/utils/dateUtils';
-import { Link, useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  Alert,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 export function HomeScreen() {
   const today = getTodayLocal();
@@ -62,44 +64,21 @@ export function HomeScreen() {
   
   const [modalVisible, setModalVisible] = useState(false);
   const [bmrModalVisible, setBmrModalVisible] = useState(false);
-  const [bmrInput, setBmrInput] = useState(bmr?.toString() || '');
   const [weightInput, setWeightInput] = useState(weight?.toString() || '');
   const [targetModalVisible, setTargetModalVisible] = useState(false);
-  const [targetWeightInput, setTargetWeightInput] = useState(targetWeight?.toString() || '');
-  const [targetDateInput, setTargetDateInput] = useState(targetDate || '');
 
   // Sync weight input with database value
   useEffect(() => {
     setWeightInput(weight?.toString() || '');
   }, [weight]);
 
-  const handleSetBMR = () => {
-    const num = parseFloat(bmrInput);
-    if (isNaN(num) || num <= 0) {
-      Alert.alert('Error', 'Please enter a valid BMR');
-      return;
-    }
-    updateBMR(num);
+  const handleSetBMR = (bmr: number) => {
+    updateBMR(bmr);
     setBmrModalVisible(false);
   };
 
-  const handleSetTarget = () => {
-    const weightNum = parseFloat(targetWeightInput);
-    if (isNaN(weightNum) || weightNum <= 0) {
-      Alert.alert('Error', 'Please enter a valid target weight');
-      return;
-    }
-    if (!targetDateInput || targetDateInput.trim() === '') {
-      Alert.alert('Error', 'Please enter a target date');
-      return;
-    }
-    // Validate date format (YYYY-MM-DD)
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(targetDateInput)) {
-      Alert.alert('Error', 'Please enter a valid date in YYYY-MM-DD format');
-      return;
-    }
-    updateTarget(weightNum, targetDateInput);
+  const handleSetTarget = (weight: number, date: string) => {
+    updateTarget(weight, date);
     setTargetModalVisible(false);
   };
 
@@ -149,15 +128,6 @@ export function HomeScreen() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    // Parse date string in local timezone to avoid timezone issues
-    const date = parseDateLocal(dateString);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
 
   return (
     <View style={styles.container}>
@@ -165,18 +135,13 @@ export function HomeScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Calorie Tracker</Text>
-          <Text style={styles.headerSubtitle}>{formatDate(today)}</Text>
+          <Text style={styles.headerSubtitle}>{formatDateFull(today)}</Text>
         </View>
 
         {/* Today's Summary Card */}
         <View style={styles.summaryCard}>
           <View style={styles.summaryHeader}>
             <Text style={styles.summaryTitle}>Today</Text>
-            <Link href="/(tabs)/edit" asChild>
-              <Pressable>
-                <Text style={styles.viewDetailsText}>View Details →</Text>
-              </Pressable>
-            </Link>
           </View>
 
           <View style={styles.summaryStats}>
@@ -239,8 +204,6 @@ export function HomeScreen() {
           <View style={styles.bmrHeader}>
             <Text style={styles.bmrTitle}>Target Weight</Text>
             <Pressable onPress={() => {
-              setTargetWeightInput(targetWeight?.toString() || '');
-              setTargetDateInput(targetDate || '');
               setTargetModalVisible(true);
             }}>
               <Text style={styles.bmrEditText}>{targetWeight ? 'Edit' : 'Set'}</Text>
@@ -250,7 +213,7 @@ export function HomeScreen() {
             <View>
               <Text style={styles.bmrValue}>{targetWeight} lbs</Text>
               <Text style={styles.targetDateText}>
-                Target Date: {parseDateLocal(targetDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                Target Date: {formatDateShort(targetDate)}
               </Text>
               {weight && (
                 <>
@@ -297,7 +260,6 @@ export function HomeScreen() {
           <View style={styles.bmrHeader}>
             <Text style={styles.bmrTitle}>BMR (Basal Metabolic Rate)</Text>
             <Pressable onPress={() => {
-              setBmrInput(bmr?.toString() || '');
               setBmrModalVisible(true);
             }}>
               <Text style={styles.bmrEditText}>{bmr ? 'Edit' : 'Set'}</Text>
@@ -329,44 +291,12 @@ export function HomeScreen() {
       />
 
       {/* BMR Setting Modal */}
-      <Modal
+      <BMRModal
         visible={bmrModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setBmrModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Set BMR</Text>
-            <Text style={styles.modalDescription}>
-              Your Basal Metabolic Rate is the number of calories your body burns at rest.
-            </Text>
-            <TextInput
-              style={styles.modalInput}
-              value={bmrInput}
-              onChangeText={setBmrInput}
-              placeholder="Enter BMR (e.g., 2000)"
-              placeholderTextColor="#666"
-              keyboardType="numeric"
-              autoFocus
-            />
-            <View style={styles.modalButtons}>
-              <Pressable
-                style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={() => setBmrModalVisible(false)}
-              >
-                <Text style={styles.modalButtonCancelText}>Cancel</Text>
-              </Pressable>
-              <Pressable
-                style={[styles.modalButton, styles.modalButtonSave]}
-                onPress={handleSetBMR}
-              >
-                <Text style={styles.modalButtonSaveText}>Save</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setBmrModalVisible(false)}
+        onSave={handleSetBMR}
+        currentBMR={bmr}
+      />
 
       {/* Weight Edit Modal */}
       <Modal
@@ -383,7 +313,7 @@ export function HomeScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>
-              {weightModalDate ? `Edit Weight - ${parseDateLocal(weightModalDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : 'Edit Weight'}
+              {weightModalDate ? `Edit Weight - ${formatDateShort(weightModalDate)}` : 'Edit Weight'}
             </Text>
             <Text style={styles.modalDescription}>
               Enter your weight for this date.
@@ -421,102 +351,13 @@ export function HomeScreen() {
       </Modal>
 
       {/* Target Weight Modal */}
-      <Modal
+      <TargetWeightModal
         visible={targetModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setTargetModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Set Target Weight</Text>
-            <Text style={styles.modalDescription}>
-              Set your target weight and the date you want to reach it.
-            </Text>
-            <Text style={styles.modalLabel}>Target Weight (lbs)</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={targetWeightInput}
-              onChangeText={setTargetWeightInput}
-              placeholder="Enter target weight (e.g., 150)"
-              placeholderTextColor="#666"
-              keyboardType="numeric"
-              autoFocus
-            />
-            <Text style={styles.modalLabel}>Target Date (YYYY-MM-DD)</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={targetDateInput}
-              onChangeText={setTargetDateInput}
-              placeholder="Enter date (e.g., 2026-12-31)"
-              placeholderTextColor="#666"
-            />
-            <View style={styles.modalButtons}>
-              <Pressable
-                style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={() => setTargetModalVisible(false)}
-              >
-                <Text style={styles.modalButtonCancelText}>Cancel</Text>
-              </Pressable>
-              <Pressable
-                style={[styles.modalButton, styles.modalButtonSave]}
-                onPress={handleSetTarget}
-              >
-                <Text style={styles.modalButtonSaveText}>Save</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Target Weight Modal */}
-      <Modal
-        visible={targetModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setTargetModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Set Target Weight</Text>
-            <Text style={styles.modalDescription}>
-              Set your target weight and the date you want to reach it.
-            </Text>
-            <Text style={styles.modalLabel}>Target Weight (lbs)</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={targetWeightInput}
-              onChangeText={setTargetWeightInput}
-              placeholder="Enter target weight (e.g., 150)"
-              placeholderTextColor="#666"
-              keyboardType="numeric"
-              autoFocus
-            />
-            <Text style={styles.modalLabel}>Target Date (YYYY-MM-DD)</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={targetDateInput}
-              onChangeText={setTargetDateInput}
-              placeholder="Enter date (e.g., 2026-12-31)"
-              placeholderTextColor="#666"
-            />
-            <View style={styles.modalButtons}>
-              <Pressable
-                style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={() => setTargetModalVisible(false)}
-              >
-                <Text style={styles.modalButtonCancelText}>Cancel</Text>
-              </Pressable>
-              <Pressable
-                style={[styles.modalButton, styles.modalButtonSave]}
-                onPress={handleSetTarget}
-              >
-                <Text style={styles.modalButtonSaveText}>Save</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setTargetModalVisible(false)}
+        onSave={handleSetTarget}
+        currentWeight={targetWeight}
+        currentDate={targetDate}
+      />
     </View>
   );
 }
