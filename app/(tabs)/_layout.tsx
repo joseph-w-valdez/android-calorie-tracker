@@ -37,6 +37,19 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="scalemass.fill" color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="gearshape.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="edit"
+        options={{
+          href: null, // Hide from tab bar but keep as route
+        }}
+      />
     </Tabs>
   );
 }

@@ -3,6 +3,7 @@ import { EntryRow } from '@/src/components/EntryRow';
 import type { Entry } from '@/src/db/schema';
 import { useDay } from '@/src/hooks/useDay';
 import { getTodayLocal, parseDateLocal } from '@/src/utils/dateUtils';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
     Pressable,
@@ -18,6 +19,7 @@ interface TodayScreenProps {
 }
 
 export function TodayScreen({ date }: TodayScreenProps = {}) {
+  const router = useRouter();
   // Use provided date or default to today
   const selectedDate = date || getTodayLocal();
   const { entries, caloriesIn, caloriesOut, net, weight, addEntry, updateEntry, deleteEntry, updateWeight } = useDay(selectedDate);
@@ -83,6 +85,13 @@ export function TodayScreen({ date }: TodayScreenProps = {}) {
         {/* Date Header */}
         <View style={styles.header}>
           <Text style={styles.dateText}>{formatDate(selectedDate)}</Text>
+          <Pressable
+            style={styles.backButton}
+            onPress={() => router.back()}
+            android_ripple={{ color: '#333' }}
+          >
+            <Text style={styles.backButtonText}>✕</Text>
+          </Pressable>
         </View>
 
         {/* Weight Input */}
@@ -175,11 +184,29 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     borderBottomWidth: 1,
     borderBottomColor: '#333',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   dateText: {
     color: '#fff',
     fontSize: 20,
     fontWeight: '600',
+    flex: 1,
+  },
+  backButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#2a2a2a',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backButtonText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '300',
+    lineHeight: 20,
   },
   weightContainer: {
     padding: 20,
