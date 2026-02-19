@@ -2,6 +2,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } fro
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AppThemeProvider } from '@/src/contexts/ThemeContext';
@@ -28,8 +29,10 @@ function NavigationWrapper() {
 
 export default function RootLayout() {
   return (
-    <AppThemeProvider>
-      <NavigationWrapper />
-    </AppThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AppThemeProvider>
+        <NavigationWrapper />
+      </AppThemeProvider>
+    </GestureHandlerRootView>
   );
 }

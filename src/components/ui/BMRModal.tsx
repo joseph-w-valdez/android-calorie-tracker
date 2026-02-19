@@ -31,11 +31,11 @@ export function BMRModal({ visible, onClose, onSave, currentBMR }: BMRModalProps
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="fade"
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
-        <View style={styles.content}>
+      <Pressable style={styles.overlay} onPress={onClose}>
+        <Pressable style={styles.content} onPress={(e) => e.stopPropagation()}>
           <Text style={styles.title}>Set BMR</Text>
           <Text style={styles.description}>
             Your Basal Metabolic Rate is the number of calories your body burns at rest.
@@ -64,8 +64,8 @@ export function BMRModal({ visible, onClose, onSave, currentBMR }: BMRModalProps
               <Text style={styles.buttonText}>Save</Text>
             </Pressable>
           </View>
-        </View>
-      </View>
+        </Pressable>
+      </Pressable>
     </Modal>
   );
 }
@@ -74,15 +74,21 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
+    paddingTop: 0,
   },
   content: {
     backgroundColor: Colors.cardBackground,
-    borderRadius: BorderRadius.lg,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+    borderBottomLeftRadius: BorderRadius.lg,
+    borderBottomRightRadius: BorderRadius.lg,
     padding: Spacing.xxl,
-    width: '85%',
-    maxWidth: 400,
+    paddingBottom: Spacing.xxl + 20,
+    width: '100%',
+    maxWidth: '100%',
+    minHeight: 320,
   },
   title: {
     color: Colors.text,

@@ -1,11 +1,12 @@
-import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useMonthData } from '@/src/hooks/useMonthData';
-import { useBMR } from '@/src/hooks/useBMR';
-import { useThemeColors } from '@/src/hooks/useThemeColors';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors as ThemeColors } from '@/constants/theme';
-import { formatDateLocal, getTodayLocal, parseDateLocal } from '@/src/utils/dateUtils';
+import { useBMR } from '@/src/hooks/useBMR';
+import { useMonthData } from '@/src/hooks/useMonthData';
+import { useThemeColors } from '@/src/hooks/useThemeColors';
+import { formatDateLocal, getTodayLocal } from '@/src/utils/dateUtils';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 interface CalendarProps {
   year?: number;
@@ -18,8 +19,32 @@ export function Calendar({ year, month, refreshKey }: CalendarProps) {
   const colors = useThemeColors();
   const styles = createStyles(colors);
   const today = new Date();
-  const currentYear = year || today.getFullYear();
-  const currentMonth = month || today.getMonth() + 1;
+  const [currentYear, setCurrentYear] = useState(year || today.getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(month || today.getMonth() + 1);
+
+  // Sync with props if they change
+  useEffect(() => {
+    if (year !== undefined) setCurrentYear(year);
+    if (month !== undefined) setCurrentMonth(month);
+  }, [year, month]);
+
+  const handlePrevMonth = () => {
+    if (currentMonth === 1) {
+      setCurrentMonth(12);
+      setCurrentYear(currentYear - 1);
+    } else {
+      setCurrentMonth(currentMonth - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (currentMonth === 12) {
+      setCurrentMonth(1);
+      setCurrentYear(currentYear + 1);
+    } else {
+      setCurrentMonth(currentMonth + 1);
+    }
+  };
   
   const monthData = useMonthData(currentYear, currentMonth, refreshKey);
   const { bmr } = useBMR();
@@ -68,10 +93,28 @@ export function Calendar({ year, month, refreshKey }: CalendarProps) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.monthTitle}>
-          {monthNames[currentMonth - 1]} {currentYear}
-        </Text>
-        <Text style={styles.subtitle}>Monthly Net Calories</Text>
+        <View style={styles.headerRow}>
+          <Pressable
+            style={styles.navButton}
+            onPress={handlePrevMonth}
+            android_ripple={{ color: colors.border }}
+          >
+            <IconSymbol name="chevron.left" size={20} color={colors.text} />
+          </Pressable>
+          <View style={styles.titleContainer}>
+            <Text style={styles.monthTitle}>
+              {monthNames[currentMonth - 1]} {currentYear}
+            </Text>
+            <Text style={styles.subtitle}>Monthly Net Calories</Text>
+          </View>
+          <Pressable
+            style={styles.navButton}
+            onPress={handleNextMonth}
+            android_ripple={{ color: colors.border }}
+          >
+            <IconSymbol name="chevron.right" size={20} color={colors.text} />
+          </Pressable>
+        </View>
       </View>
 
       {/* Weekday headers */}
@@ -139,6 +182,21 @@ function createStyles(colors: typeof ThemeColors.light) {
     },
     header: {
       marginBottom: 16,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    navButton: {
+      padding: 8,
+      minWidth: 40,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    titleContainer: {
+      flex: 1,
+      alignItems: 'center',
     },
     monthTitle: {
       color: colors.text,

@@ -1,6 +1,7 @@
 import { Colors as ThemeColors } from '@/constants/theme';
 import { AddEntryModal } from '@/src/components/AddEntryModal';
 import { Calendar } from '@/src/components/Calendar';
+import { MilesChart } from '@/src/components/MilesChart';
 import { TrendChart } from '@/src/components/TrendChart';
 import { BMRModal } from '@/src/components/ui/BMRModal';
 import { TargetWeightModal } from '@/src/components/ui/TargetWeightModal';
@@ -10,6 +11,7 @@ import { WeightChart } from '@/src/components/WeightChart';
 import { db } from '@/src/db/database';
 import { useBMR } from '@/src/hooks/useBMR';
 import { useDay } from '@/src/hooks/useDay';
+import { useMilesTrend } from '@/src/hooks/useMilesTrend';
 import { useTargetWeight } from '@/src/hooks/useTargetWeight';
 import { useThemeColors } from '@/src/hooks/useThemeColors';
 import { useTrend } from '@/src/hooks/useTrend';
@@ -17,7 +19,7 @@ import { useWeightTrend } from '@/src/hooks/useWeightTrend';
 import { formatDateFull, formatDateShort } from '@/src/utils/dateFormatters';
 import { getTodayLocal, parseDateLocal } from '@/src/utils/dateUtils';
 import { useFocusEffect } from '@react-navigation/native';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Pressable,
@@ -32,6 +34,7 @@ export function HomeScreen() {
   const colors = useThemeColors();
   const styles = createStyles(colors);
   const today = getTodayLocal();
+  const scrollViewRef = useRef<ScrollView>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { entries, caloriesIn, caloriesOut, net, weight, addEntry, updateWeight } = useDay(today, refreshTrigger);
   
@@ -42,12 +45,14 @@ export function HomeScreen() {
   const [trendRefreshKey, setTrendRefreshKey] = useState(0);
   const [calendarRefreshKey, setCalendarRefreshKey] = useState(0);
   const [weightRefreshKey, setWeightRefreshKey] = useState(0);
+  const [milesRefreshKey, setMilesRefreshKey] = useState(0);
   const trendData = useTrend(7, trendRefreshKey);
   const weightData = useWeightTrend(7, weightRefreshKey);
+  const milesData = useMilesTrend(7, milesRefreshKey);
   const { bmr, updateBMR } = useBMR();
   const { targetWeight, targetDate, updateTarget } = useTargetWeight();
   
-  // Refresh when screen comes into focus
+  // Refresh when screen comes into focus and scroll to top
   useFocusEffect(
     useCallback(() => {
       // Force refresh by updating triggers
@@ -55,14 +60,18 @@ export function HomeScreen() {
       setTrendRefreshKey(prev => prev + 1);
       setCalendarRefreshKey(prev => prev + 1);
       setWeightRefreshKey(prev => prev + 1);
+      setMilesRefreshKey(prev => prev + 1);
+      // Scroll to top
+      scrollViewRef.current?.scrollTo({ y: 0, animated: false });
     }, [])
   );
 
-  // Also refresh trend, calendar, and weight when entries or weight change
+  // Also refresh trend, calendar, weight, and miles when entries or weight change
   useEffect(() => {
     setTrendRefreshKey(prev => prev + 1);
     setCalendarRefreshKey(prev => prev + 1);
     setWeightRefreshKey(prev => prev + 1);
+    setMilesRefreshKey(prev => prev + 1);
   }, [entries.length, caloriesIn, caloriesOut, weight]);
   
   const [modalVisible, setModalVisible] = useState(false);
@@ -131,7 +140,7 @@ export function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+      <ScrollView ref={scrollViewRef} style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Calorie Tracker</Text>
@@ -147,7 +156,12 @@ export function HomeScreen() {
           <View style={styles.summaryStats}>
             <View style={styles.statItem}>
               <Text style={styles.statLabel}>Net Calories</Text>
-              <Text style={[styles.statValue, net < 0 ? styles.statGood : styles.statBad]}>
+              <Text style={[
+                styles.statValue,
+                bmr !== null
+                  ? (net < bmr ? styles.statGood : styles.statBad)
+                  : (net < 0 ? styles.statGood : styles.statBad)
+              ]}>
                 {net > 0 ? '+' : ''}{net}
               </Text>
             </View>
@@ -275,6 +289,11 @@ export function HomeScreen() {
         {/* Trend Chart */}
         <View style={styles.chartCard}>
           <TrendChart data={trendData} bmr={bmr} />
+        </View>
+
+        {/* Miles Chart */}
+        <View style={styles.chartCard}>
+          <MilesChart data={milesData} />
         </View>
 
         {/* Calendar */}

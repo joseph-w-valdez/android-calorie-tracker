@@ -63,8 +63,14 @@ export function EntryRow({ entry, onEdit, onDelete }: EntryRowProps) {
         onLongPress={handleLongPress}
         android_ripple={{ color: colors.border }}
       >
-        <Text style={styles.name}>{entry.name}</Text>
-        <Text style={styles.calories}>{entry.calories} cal</Text>
+        <Text style={styles.name}>
+          {entry.type === 'exercise' && entry.name.includes('mile')
+            ? entry.name
+            : entry.name}
+        </Text>
+        <Text style={styles.calories}>
+          {entry.type === 'exercise' ? `${entry.calories} cal` : `${entry.calories} cal`}
+        </Text>
       </Pressable>
       <Pressable
         style={styles.deleteButton}

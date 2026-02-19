@@ -1,18 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  Modal,
-  Pressable,
-  Alert,
-} from 'react-native';
-import * as Haptics from 'expo-haptics';
+import { Colors as ThemeColors } from '@/constants/theme';
 import type { Entry } from '@/src/db/schema';
 import { useThemeColors } from '@/src/hooks/useThemeColors';
-import { Colors as ThemeColors } from '@/constants/theme';
-import { validateRequired, validatePositiveNumber } from '@/src/utils/validators';
+import { validatePositiveNumber, validateRequired } from '@/src/utils/validators';
+import React, { useEffect, useState } from 'react';
+import {
+  Alert,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 interface AddEntryModalProps {
   visible: boolean;
@@ -22,42 +21,82 @@ interface AddEntryModalProps {
   entry?: Entry | null; // If provided, we're in edit mode
 }
 
+// Calorie burn rate per mile (walking rate)
+const CALORIES_PER_MILE = 100;
+
 export function AddEntryModal({ visible, onClose, onSubmit, onDelete, entry }: AddEntryModalProps) {
   const colors = useThemeColors();
   const styles = createStyles(colors);
   const [type, setType] = useState<'food' | 'exercise'>('food');
   const [name, setName] = useState('');
   const [calories, setCalories] = useState('');
+  const [miles, setMiles] = useState('');
+
+  // Calculate calories based on miles
+  const calculateCalories = (milesValue: number): number => {
+    return Math.round(milesValue * CALORIES_PER_MILE);
+  };
 
   // Pre-fill form when editing
   useEffect(() => {
     if (entry) {
       setType(entry.type);
-      setName(entry.name);
-      setCalories(entry.calories.toString());
+      if (entry.type === 'exercise') {
+        // Parse miles from entry name or calculate from calories
+        const milesMatch = entry.name.match(/(\d+\.?\d*)\s*miles?/i);
+        if (milesMatch) {
+          setMiles(milesMatch[1]);
+        } else {
+          // Calculate miles from calories
+          const estimatedMiles = entry.calories / CALORIES_PER_MILE;
+          setMiles(estimatedMiles.toFixed(1));
+        }
+        setName('');
+        setCalories('');
+      } else {
+        setName(entry.name);
+        setCalories(entry.calories.toString());
+        setMiles('');
+      }
     } else {
       setType('food');
       setName('');
       setCalories('');
+      setMiles('');
     }
   }, [entry, visible]);
 
   const handleSubmit = () => {
-    const nameValidation = validateRequired(name.trim(), 'name');
-    if (!nameValidation.valid) {
-      Alert.alert('Error', nameValidation.error);
-      return;
-    }
+    if (type === 'exercise') {
+      const milesValidation = validatePositiveNumber(miles, 'miles');
+      if (!milesValidation.valid) {
+        Alert.alert('Error', milesValidation.error);
+        return;
+      }
 
-    const caloriesValidation = validatePositiveNumber(calories, 'calorie amount');
-    if (!caloriesValidation.valid) {
-      Alert.alert('Error', caloriesValidation.error);
-      return;
-    }
+      const milesValue = parseFloat(miles);
+      const calculatedCalories = calculateCalories(milesValue);
+      const entryName = `${milesValue} ${milesValue === 1 ? 'mile' : 'miles'}`;
 
-    onSubmit(type, name.trim(), parseFloat(calories), entry?.id);
-    setName('');
-    setCalories('');
+      onSubmit('exercise', entryName, calculatedCalories, entry?.id);
+      setMiles('');
+    } else {
+      const nameValidation = validateRequired(name.trim(), 'name');
+      if (!nameValidation.valid) {
+        Alert.alert('Error', nameValidation.error);
+        return;
+      }
+
+      const caloriesValidation = validatePositiveNumber(calories, 'calorie amount');
+      if (!caloriesValidation.valid) {
+        Alert.alert('Error', caloriesValidation.error);
+        return;
+      }
+
+      onSubmit('food', name.trim(), parseFloat(calories), entry?.id);
+      setName('');
+      setCalories('');
+    }
     setType('food');
     onClose();
   };
@@ -65,6 +104,7 @@ export function AddEntryModal({ visible, onClose, onSubmit, onDelete, entry }: A
   const handleCancel = () => {
     setName('');
     setCalories('');
+    setMiles('');
     setType('food');
     onClose();
   };
@@ -93,11 +133,11 @@ export function AddEntryModal({ visible, onClose, onSubmit, onDelete, entry }: A
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="fade"
       onRequestClose={handleCancel}
     >
-      <View style={styles.overlay}>
-        <View style={styles.modal}>
+      <Pressable style={styles.overlay} onPress={handleCancel}>
+        <Pressable style={styles.modal} onPress={(e) => e.stopPropagation()}>
           <Text style={styles.title}>{entry ? 'Edit Entry' : 'Add Entry'}</Text>
 
           {/* Type Toggle */}
@@ -120,27 +160,55 @@ export function AddEntryModal({ visible, onClose, onSubmit, onDelete, entry }: A
             </Pressable>
           </View>
 
-          {/* Name Input */}
-          <Text style={styles.label}>Name</Text>
-          <TextInput
-            style={styles.input}
-            value={name}
-            onChangeText={setName}
-            placeholder="Enter name"
-            placeholderTextColor={colors.textTertiary}
-            autoFocus
-          />
+          {type === 'food' ? (
+            <>
+              {/* Name Input */}
+              <Text style={styles.label}>Name</Text>
+              <TextInput
+                style={styles.input}
+                value={name}
+                onChangeText={setName}
+                placeholder="Enter name"
+                placeholderTextColor={colors.textTertiary}
+                autoFocus
+              />
 
-          {/* Calories Input */}
-          <Text style={styles.label}>Calories</Text>
-          <TextInput
-            style={styles.input}
-            value={calories}
-            onChangeText={setCalories}
-            placeholder="Enter calories"
-            placeholderTextColor={colors.textTertiary}
-            keyboardType="numeric"
-          />
+              {/* Calories Input */}
+              <Text style={styles.label}>Calories</Text>
+              <TextInput
+                style={styles.input}
+                value={calories}
+                onChangeText={setCalories}
+                placeholder="Enter calories"
+                placeholderTextColor={colors.textTertiary}
+                keyboardType="numeric"
+              />
+            </>
+          ) : (
+            <>
+              {/* Miles Input */}
+              <Text style={styles.label}>Miles</Text>
+              <TextInput
+                style={styles.input}
+                value={miles}
+                onChangeText={setMiles}
+                placeholder="Enter miles"
+                placeholderTextColor={colors.textTertiary}
+                keyboardType="decimal-pad"
+                autoFocus
+              />
+
+              {/* Calculated Calories Display */}
+              {miles && !isNaN(parseFloat(miles)) && parseFloat(miles) > 0 && (
+                <View style={styles.caloriesDisplay}>
+                  <Text style={styles.caloriesLabel}>Estimated Calories:</Text>
+                  <Text style={styles.caloriesValue}>
+                    {calculateCalories(parseFloat(miles))} cal
+                  </Text>
+                </View>
+              )}
+            </>
+          )}
 
           {/* Buttons */}
           <View style={styles.buttonContainer}>
@@ -156,8 +224,8 @@ export function AddEntryModal({ visible, onClose, onSubmit, onDelete, entry }: A
               <Text style={styles.submitButtonText}>{entry ? 'Save' : 'Add'}</Text>
             </Pressable>
           </View>
-        </View>
-      </View>
+        </Pressable>
+      </Pressable>
     </Modal>
   );
 }
@@ -166,15 +234,22 @@ function createStyles(colors: typeof ThemeColors.light) {
   return StyleSheet.create({
     overlay: {
       flex: 1,
-      backgroundColor: colors.background === '#fff' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.5)',
-      justifyContent: 'flex-end',
+      backgroundColor: colors.background === '#fff' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.7)',
+      justifyContent: 'flex-start',
+      alignItems: 'center',
+      paddingTop: 0,
     },
     modal: {
       backgroundColor: colors.cardBackground,
-      borderTopLeftRadius: 20,
-      borderTopRightRadius: 20,
-      padding: 20,
-      paddingBottom: 40,
+      borderTopLeftRadius: 0,
+      borderTopRightRadius: 0,
+      borderBottomLeftRadius: 12,
+      borderBottomRightRadius: 12,
+      padding: 24,
+      paddingBottom: 44,
+      width: '100%',
+      maxWidth: '100%',
+      minHeight: 400,
     },
     title: {
       color: colors.text,
@@ -219,6 +294,24 @@ function createStyles(colors: typeof ThemeColors.light) {
       padding: 12,
       borderRadius: 8,
       marginBottom: 12,
+    },
+    caloriesDisplay: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      backgroundColor: colors.inputBackground,
+      padding: 12,
+      borderRadius: 8,
+      marginBottom: 12,
+    },
+    caloriesLabel: {
+      color: colors.textSecondary,
+      fontSize: 14,
+    },
+    caloriesValue: {
+      color: colors.primary,
+      fontSize: 16,
+      fontWeight: '600',
     },
     buttonContainer: {
       flexDirection: 'row',

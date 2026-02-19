@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -25,17 +25,20 @@ export function WeightScreen() {
   const colors = useThemeColors();
   const styles = createStyles(colors);
   const today = getTodayLocal();
+  const scrollViewRef = useRef<ScrollView>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { weight, updateWeight } = useDay(today, refreshTrigger);
   const [weightRefreshKey, setWeightRefreshKey] = useState(0);
   const weightData = useWeightTrend(7, weightRefreshKey);
   const { targetWeight, targetDate, updateTarget } = useTargetWeight();
   
-  // Refresh when screen comes into focus
+  // Refresh when screen comes into focus and scroll to top
   useFocusEffect(
     useCallback(() => {
       setRefreshTrigger(prev => prev + 1);
       setWeightRefreshKey(prev => prev + 1);
+      // Scroll to top
+      scrollViewRef.current?.scrollTo({ y: 0, animated: false });
     }, [])
   );
 
@@ -138,7 +141,7 @@ export function WeightScreen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+      <ScrollView ref={scrollViewRef} style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Weight Tracking</Text>

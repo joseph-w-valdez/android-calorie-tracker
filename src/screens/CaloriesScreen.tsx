@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,10 +12,12 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { useDay } from '@/src/hooks/useDay';
 import { useTrend } from '@/src/hooks/useTrend';
+import { useMilesTrend } from '@/src/hooks/useMilesTrend';
 import { useBMR } from '@/src/hooks/useBMR';
 import { useThemeColors } from '@/src/hooks/useThemeColors';
 import { Colors as ThemeColors } from '@/constants/theme';
 import { TrendChart } from '@/src/components/TrendChart';
+import { MilesChart } from '@/src/components/MilesChart';
 import { Calendar } from '@/src/components/Calendar';
 import { AddEntryModal } from '@/src/components/AddEntryModal';
 import { getTodayLocal, parseDateLocal } from '@/src/utils/dateUtils';
@@ -24,26 +26,33 @@ export function CaloriesScreen() {
   const colors = useThemeColors();
   const styles = createStyles(colors);
   const today = getTodayLocal();
+  const scrollViewRef = useRef<ScrollView>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { entries, caloriesIn, caloriesOut, net, addEntry } = useDay(today, refreshTrigger);
   const [trendRefreshKey, setTrendRefreshKey] = useState(0);
   const [calendarRefreshKey, setCalendarRefreshKey] = useState(0);
+  const [milesRefreshKey, setMilesRefreshKey] = useState(0);
   const trendData = useTrend(7, trendRefreshKey);
+  const milesData = useMilesTrend(7, milesRefreshKey);
   const { bmr, updateBMR } = useBMR();
   
-  // Refresh when screen comes into focus
+  // Refresh when screen comes into focus and scroll to top
   useFocusEffect(
     useCallback(() => {
       setRefreshTrigger(prev => prev + 1);
       setTrendRefreshKey(prev => prev + 1);
       setCalendarRefreshKey(prev => prev + 1);
+      setMilesRefreshKey(prev => prev + 1);
+      // Scroll to top
+      scrollViewRef.current?.scrollTo({ y: 0, animated: false });
     }, [])
   );
 
-  // Refresh trend and calendar when entries change
+  // Refresh trend, calendar, and miles when entries change
   useEffect(() => {
     setTrendRefreshKey(prev => prev + 1);
     setCalendarRefreshKey(prev => prev + 1);
+    setMilesRefreshKey(prev => prev + 1);
   }, [entries.length, caloriesIn, caloriesOut]);
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -77,7 +86,7 @@ export function CaloriesScreen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+      <ScrollView ref={scrollViewRef} style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Calorie Tracking</Text>
@@ -139,6 +148,11 @@ export function CaloriesScreen() {
           <TrendChart data={trendData} bmr={bmr} />
         </View>
 
+        {/* Miles Chart */}
+        <View style={styles.card}>
+          <MilesChart data={milesData} />
+        </View>
+
         {/* Calendar */}
         <View style={styles.card}>
           <Calendar refreshKey={calendarRefreshKey} />
@@ -149,7 +163,10 @@ export function CaloriesScreen() {
       <AddEntryModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
-        onSubmit={addEntry}
+        onSubmit={(type, name, calories) => {
+          addEntry(type, name, calories);
+          // Refresh triggers will be updated by useEffect when entries change
+        }}
       />
 
       {/* BMR Setting Modal */}

@@ -6,7 +6,8 @@ import { useThemeColors } from '@/src/hooks/useThemeColors';
 import { Colors as ThemeColors } from '@/constants/theme';
 import { getTodayLocal, parseDateLocal } from '@/src/utils/dateUtils';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
     Pressable,
     ScrollView,
@@ -26,11 +27,19 @@ export function TodayScreen({ date }: TodayScreenProps = {}) {
   const styles = createStyles(colors);
   // Use provided date or default to today
   const selectedDate = date || getTodayLocal();
-  const { entries, caloriesIn, caloriesOut, net, weight, addEntry, updateEntry, deleteEntry, updateWeight } = useDay(selectedDate);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const { entries, caloriesIn, caloriesOut, net, weight, addEntry, updateEntry, deleteEntry, updateWeight } = useDay(selectedDate, refreshTrigger);
   
   const [weightInput, setWeightInput] = useState(weight?.toString() || '');
   const [modalVisible, setModalVisible] = useState(false);
   const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
+
+  // Refresh when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      setRefreshTrigger(prev => prev + 1);
+    }, [])
+  );
 
   // Sync weight input with database value
   useEffect(() => {
@@ -54,6 +63,7 @@ export function TodayScreen({ date }: TodayScreenProps = {}) {
       // Add new entry
       addEntry(type, name, calories);
     }
+    // Refresh trigger will be updated by useDay hook automatically
     setModalVisible(false);
   };
 
