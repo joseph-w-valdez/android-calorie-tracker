@@ -2,6 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import Svg, { Circle, Line, Text as SvgText } from 'react-native-svg';
 import type { WeightDay } from '@/src/hooks/useWeightTrend';
+import { useThemeColors } from '@/src/hooks/useThemeColors';
+import { Colors as ThemeColors } from '@/constants/theme';
 import { parseDateLocal } from '@/src/utils/dateUtils';
 
 interface WeightChartProps {
@@ -13,6 +15,13 @@ const CHART_PADDING = 40;
 const POINT_RADIUS = 4;
 
 export function WeightChart({ data }: WeightChartProps) {
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
+  const isLight = colors.background === '#fff';
+  const gridColor = isLight ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)';
+  const lineColor = colors.primary;
+  const textColor = isLight ? colors.text : '#fff';
+
   if (data.length === 0) {
     return (
       <View style={styles.container}>
@@ -97,7 +106,7 @@ export function WeightChart({ data }: WeightChartProps) {
               y1={CHART_PADDING + label.y}
               x2={CHART_PADDING + svgWidth}
               y2={CHART_PADDING + label.y}
-              stroke="rgba(255, 255, 255, 0.1)"
+              stroke={gridColor}
               strokeWidth="1"
             />
           ))}
@@ -112,7 +121,7 @@ export function WeightChart({ data }: WeightChartProps) {
                 key={`x-label-${day.date}`}
                 x={x}
                 y={CHART_HEIGHT - 8}
-                fill="#666"
+                fill={colors.textTertiary}
                 fontSize="10"
                 textAnchor="middle"
               >
@@ -138,7 +147,7 @@ export function WeightChart({ data }: WeightChartProps) {
                       y1={CHART_PADDING + prevPoint.y}
                       x2={CHART_PADDING + point.x}
                       y2={CHART_PADDING + point.y}
-                      stroke="#4a9eff"
+                      stroke={lineColor}
                       strokeWidth="2"
                     />
                   );
@@ -155,7 +164,7 @@ export function WeightChart({ data }: WeightChartProps) {
               cx={CHART_PADDING + point.x}
               cy={CHART_PADDING + point.y}
               r={POINT_RADIUS}
-              fill="#4a9eff"
+              fill={lineColor}
             />
           ))}
 
@@ -165,7 +174,7 @@ export function WeightChart({ data }: WeightChartProps) {
               key={`tooltip-${point.date}`}
               x={CHART_PADDING + point.x}
               y={CHART_PADDING + point.y - 10}
-              fill="#fff"
+              fill={textColor}
               fontSize="10"
               textAnchor="middle"
             >
@@ -178,36 +187,38 @@ export function WeightChart({ data }: WeightChartProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  title: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  summary: {
-    color: '#aaa',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  chartContainer: {
-    alignItems: 'center',
-    backgroundColor: '#2a2a2a',
-    borderRadius: 8,
-    padding: 10,
-  },
-  emptyText: {
-    color: '#666',
-    fontSize: 14,
-    textAlign: 'center',
-    paddingVertical: 20,
-  },
-});
+function createStyles(colors: typeof ThemeColors.light) {
+  return StyleSheet.create({
+    container: {
+      padding: 16,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 16,
+    },
+    title: {
+      color: colors.text,
+      fontSize: 18,
+      fontWeight: '600',
+    },
+    summary: {
+      color: colors.textSecondary,
+      fontSize: 14,
+      fontWeight: '500',
+    },
+    chartContainer: {
+      alignItems: 'center',
+      backgroundColor: colors.background === '#fff' ? '#f5f5f5' : colors.inputBackground,
+      borderRadius: 8,
+      padding: 10,
+    },
+    emptyText: {
+      color: colors.textTertiary,
+      fontSize: 14,
+      textAlign: 'center',
+      paddingVertical: 20,
+    },
+  });
+}

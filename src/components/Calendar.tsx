@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useMonthData } from '@/src/hooks/useMonthData';
 import { useBMR } from '@/src/hooks/useBMR';
+import { useThemeColors } from '@/src/hooks/useThemeColors';
+import { Colors as ThemeColors } from '@/constants/theme';
 import { formatDateLocal, getTodayLocal, parseDateLocal } from '@/src/utils/dateUtils';
 
 interface CalendarProps {
@@ -13,6 +15,8 @@ interface CalendarProps {
 
 export function Calendar({ year, month, refreshKey }: CalendarProps) {
   const router = useRouter();
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
   const today = new Date();
   const currentYear = year || today.getFullYear();
   const currentMonth = month || today.getMonth() + 1;
@@ -105,7 +109,7 @@ export function Calendar({ year, month, refreshKey }: CalendarProps) {
                 isToday && styles.todayCell,
               ]}
               onPress={() => handleDatePress(dateData.date)}
-              android_ripple={{ color: '#333' }}
+              android_ripple={{ color: colors.border }}
             >
               <Text style={[styles.dayNumber, isToday && styles.todayNumber]}>
                 {day}
@@ -128,82 +132,84 @@ export function Calendar({ year, month, refreshKey }: CalendarProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-  },
-  header: {
-    marginBottom: 16,
-  },
-  monthTitle: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  subtitle: {
-    color: '#aaa',
-    fontSize: 14,
-    fontWeight: '400',
-  },
-  weekDaysRow: {
-    flexDirection: 'row',
-    marginBottom: 8,
-  },
-  weekDayCell: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  weekDayText: {
-    color: '#aaa',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  calendarGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  dayCell: {
-    width: '14.28%', // 100% / 7 days
-    aspectRatio: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 4,
-    borderWidth: 1,
-    borderColor: '#333',
-    backgroundColor: '#1a1a1a',
-  },
-  todayCell: {
-    backgroundColor: '#2a2a2a',
-    borderColor: '#4a9eff',
-    borderWidth: 2,
-  },
-  dayNumber: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 2,
-  },
-  todayNumber: {
-    color: '#4a9eff',
-    fontWeight: 'bold',
-  },
-  netText: {
-    fontSize: 10,
-    fontWeight: '500',
-  },
-  netPositive: {
-    color: '#f87171',
-  },
-  netNegative: {
-    color: '#4ade80',
-  },
-  netDeficit: {
-    color: '#4ade80', // Green for deficit (net < BMR)
-  },
-  netNotDeficit: {
-    color: '#f87171', // Red for not in deficit (net >= BMR)
-  },
-});
+function createStyles(colors: typeof ThemeColors.light) {
+  return StyleSheet.create({
+    container: {
+      padding: 16,
+    },
+    header: {
+      marginBottom: 16,
+    },
+    monthTitle: {
+      color: colors.text,
+      fontSize: 20,
+      fontWeight: '600',
+      marginBottom: 4,
+    },
+    subtitle: {
+      color: colors.textSecondary,
+      fontSize: 14,
+      fontWeight: '400',
+    },
+    weekDaysRow: {
+      flexDirection: 'row',
+      marginBottom: 8,
+    },
+    weekDayCell: {
+      flex: 1,
+      alignItems: 'center',
+      paddingVertical: 8,
+    },
+    weekDayText: {
+      color: colors.textSecondary,
+      fontSize: 12,
+      fontWeight: '500',
+    },
+    calendarGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+    },
+    dayCell: {
+      width: '14.28%', // 100% / 7 days
+      aspectRatio: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 4,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.cardBackground,
+    },
+    todayCell: {
+      backgroundColor: colors.inputBackground,
+      borderColor: colors.primary,
+      borderWidth: 2,
+    },
+    dayNumber: {
+      color: colors.text,
+      fontSize: 14,
+      fontWeight: '500',
+      marginBottom: 2,
+    },
+    todayNumber: {
+      color: colors.primary,
+      fontWeight: 'bold',
+    },
+    netText: {
+      fontSize: 10,
+      fontWeight: '500',
+    },
+    netPositive: {
+      color: colors.statBad,
+    },
+    netNegative: {
+      color: colors.statGood,
+    },
+    netDeficit: {
+      color: colors.statGood, // Green for deficit (net < BMR)
+    },
+    netNotDeficit: {
+      color: colors.statBad, // Red for not in deficit (net >= BMR)
+    },
+  });
+}
 

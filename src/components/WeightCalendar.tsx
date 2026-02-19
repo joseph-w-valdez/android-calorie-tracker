@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useMonthWeightData } from '@/src/hooks/useMonthWeightData';
+import { useThemeColors } from '@/src/hooks/useThemeColors';
+import { Colors as ThemeColors } from '@/constants/theme';
 import { formatDateLocal, getTodayLocal, parseDateLocal } from '@/src/utils/dateUtils';
 
 interface WeightCalendarProps {
@@ -13,9 +16,35 @@ interface WeightCalendarProps {
 
 export function WeightCalendar({ year, month, refreshKey, onDatePress }: WeightCalendarProps) {
   const router = useRouter();
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
   const today = new Date();
-  const currentYear = year || today.getFullYear();
-  const currentMonth = month || today.getMonth() + 1;
+  const [currentYear, setCurrentYear] = useState(year || today.getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(month || today.getMonth() + 1);
+
+  // Sync with props if they change
+  useEffect(() => {
+    if (year !== undefined) setCurrentYear(year);
+    if (month !== undefined) setCurrentMonth(month);
+  }, [year, month]);
+
+  const handlePrevMonth = () => {
+    if (currentMonth === 1) {
+      setCurrentMonth(12);
+      setCurrentYear(currentYear - 1);
+    } else {
+      setCurrentMonth(currentMonth - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (currentMonth === 12) {
+      setCurrentMonth(1);
+      setCurrentYear(currentYear + 1);
+    } else {
+      setCurrentMonth(currentMonth + 1);
+    }
+  };
   
   const monthData = useMonthWeightData(currentYear, currentMonth, refreshKey);
   const todayString = getTodayLocal();
@@ -68,10 +97,20 @@ export function WeightCalendar({ year, month, refreshKey, onDatePress }: WeightC
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.monthTitle}>
-          {monthNames[currentMonth - 1]} {currentYear}
-        </Text>
-        <Text style={styles.subtitle}>Monthly Weight</Text>
+        <View style={styles.headerRow}>
+          <Pressable onPress={handlePrevMonth} style={styles.navButton}>
+            <IconSymbol name="chevron.left" size={20} color={colors.text} />
+          </Pressable>
+          <View style={styles.titleContainer}>
+            <Text style={styles.monthTitle}>
+              {monthNames[currentMonth - 1]} {currentYear}
+            </Text>
+            <Text style={styles.subtitle}>Monthly Weight</Text>
+          </View>
+          <Pressable onPress={handleNextMonth} style={styles.navButton}>
+            <IconSymbol name="chevron.right" size={20} color={colors.text} />
+          </Pressable>
+        </View>
       </View>
 
       {/* Weekday headers */}
@@ -121,7 +160,7 @@ export function WeightCalendar({ year, month, refreshKey, onDatePress }: WeightC
                 isToday && styles.todayCell,
               ]}
               onPress={() => handleDatePress(dateData.date, dateData.weight)}
-              android_ripple={{ color: '#333' }}
+              android_ripple={{ color: colors.border }}
             >
               <Text style={[styles.dayNumber, isToday && styles.todayNumber]}>
                 {day}
@@ -149,85 +188,102 @@ export function WeightCalendar({ year, month, refreshKey, onDatePress }: WeightC
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-  },
-  header: {
-    marginBottom: 16,
-  },
-  monthTitle: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  subtitle: {
-    color: '#aaa',
-    fontSize: 14,
-    fontWeight: '400',
-  },
-  weekDaysRow: {
-    flexDirection: 'row',
-    marginBottom: 8,
-  },
-  weekDayCell: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  weekDayText: {
-    color: '#aaa',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  calendarGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  dayCell: {
-    width: '14.28%', // 100% / 7 days
-    minHeight: 60, // Fixed height to accommodate weight and difference text
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 4,
-    borderWidth: 1,
-    borderColor: '#333',
-    backgroundColor: '#1a1a1a',
-  },
-  todayCell: {
-    backgroundColor: '#2a2a2a',
-    borderColor: '#4a9eff',
-    borderWidth: 2,
-  },
-  dayNumber: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 2,
-  },
-  todayNumber: {
-    color: '#4a9eff',
-    fontWeight: 'bold',
-  },
-  weightText: {
-    fontSize: 9,
-    fontWeight: '500',
-    color: '#4a9eff',
-  },
-  weightDiffText: {
-    fontSize: 8,
-    fontWeight: '400',
-    marginTop: 1,
-  },
-  weightDiffPositive: {
-    color: '#f87171', // Red for weight gain
-  },
-  weightDiffNegative: {
-    color: '#4ade80', // Green for weight loss
-  },
-  weightDiffNeutral: {
-    color: '#aaa', // Gray for no change
-  },
-});
+function createStyles(colors: typeof ThemeColors.light) {
+  return StyleSheet.create({
+    container: {
+      padding: 16,
+    },
+    header: {
+      marginBottom: 16,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    navButton: {
+      padding: 8,
+      minWidth: 40,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    titleContainer: {
+      flex: 1,
+      alignItems: 'center',
+    },
+    monthTitle: {
+      color: colors.text,
+      fontSize: 20,
+      fontWeight: '600',
+      marginBottom: 4,
+    },
+    subtitle: {
+      color: colors.textSecondary,
+      fontSize: 14,
+      fontWeight: '400',
+    },
+    weekDaysRow: {
+      flexDirection: 'row',
+      marginBottom: 8,
+    },
+    weekDayCell: {
+      flex: 1,
+      alignItems: 'center',
+      paddingVertical: 8,
+    },
+    weekDayText: {
+      color: colors.textSecondary,
+      fontSize: 12,
+      fontWeight: '500',
+    },
+    calendarGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+    },
+    dayCell: {
+      width: '14.28%', // 100% / 7 days
+      minHeight: 60, // Fixed height to accommodate weight and difference text
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 4,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.cardBackground,
+    },
+    todayCell: {
+      backgroundColor: colors.inputBackground,
+      borderColor: colors.primary,
+      borderWidth: 2,
+    },
+    dayNumber: {
+      color: colors.text,
+      fontSize: 14,
+      fontWeight: '500',
+      marginBottom: 2,
+    },
+    todayNumber: {
+      color: colors.primary,
+      fontWeight: 'bold',
+    },
+    weightText: {
+      fontSize: 9,
+      fontWeight: '500',
+      color: colors.primary,
+    },
+    weightDiffText: {
+      fontSize: 8,
+      fontWeight: '400',
+      marginTop: 1,
+    },
+    weightDiffPositive: {
+      color: colors.statBad, // Red for weight gain
+    },
+    weightDiffNegative: {
+      color: colors.statGood, // Green for weight loss
+    },
+    weightDiffNeutral: {
+      color: colors.textSecondary, // Gray for no change
+    },
+  });
+}
 

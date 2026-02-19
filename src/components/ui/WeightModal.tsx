@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Pressable, Modal, StyleSheet, Alert } from 'react-native';
-import * as Haptics from 'expo-haptics';
-import { Colors, Spacing, BorderRadius, FontSizes } from '@/src/constants/styles';
-import { validatePositiveNumber } from '@/src/utils/validators';
+import { Colors as ThemeColors } from '@/constants/theme';
+import { BorderRadius, FontSizes, Spacing } from '@/src/constants/styles';
+import { useThemeColors } from '@/src/hooks/useThemeColors';
 import { formatDateFull } from '@/src/utils/dateFormatters';
+import { validatePositiveNumber } from '@/src/utils/validators';
+import * as Haptics from 'expo-haptics';
+import React, { useEffect, useState } from 'react';
+import { Alert, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 interface WeightModalProps {
   visible: boolean;
@@ -14,6 +16,8 @@ interface WeightModalProps {
 }
 
 export function WeightModal({ visible, onClose, onSave, currentWeight, date }: WeightModalProps) {
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
   const [weightInput, setWeightInput] = useState('');
 
   useEffect(() => {
@@ -35,11 +39,11 @@ export function WeightModal({ visible, onClose, onSave, currentWeight, date }: W
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="fade"
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
-        <View style={styles.content}>
+      <Pressable style={styles.overlay} onPress={onClose}>
+        <Pressable style={styles.content} onPress={(e) => e.stopPropagation()}>
           <Text style={styles.title}>
             {date ? `Weight for ${formatDateFull(date)}` : 'Edit Weight'}
           </Text>
@@ -49,7 +53,7 @@ export function WeightModal({ visible, onClose, onSave, currentWeight, date }: W
             value={weightInput}
             onChangeText={setWeightInput}
             placeholder="Enter weight"
-            placeholderTextColor={Colors.textTertiary}
+            placeholderTextColor={colors.textTertiary}
             keyboardType="numeric"
             autoFocus
           />
@@ -67,68 +71,70 @@ export function WeightModal({ visible, onClose, onSave, currentWeight, date }: W
               <Text style={styles.buttonText}>Save</Text>
             </Pressable>
           </View>
-        </View>
-      </View>
+        </Pressable>
+      </Pressable>
     </Modal>
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  content: {
-    backgroundColor: Colors.cardBackground,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.xxl,
-    width: '85%',
-    maxWidth: 400,
-  },
-  title: {
-    color: Colors.text,
-    fontSize: FontSizes.xxl,
-    fontWeight: 'bold',
-    marginBottom: Spacing.xl,
-  },
-  label: {
-    color: Colors.text,
-    fontSize: FontSizes.base,
-    marginBottom: Spacing.sm,
-    marginTop: Spacing.md,
-  },
-  input: {
-    backgroundColor: Colors.inputBackground,
-    color: Colors.text,
-    fontSize: FontSizes.lg,
-    padding: Spacing.md,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  buttons: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: Spacing.md,
-    marginTop: Spacing.xxl,
-  },
-  button: {
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.md + 2,
-    borderRadius: BorderRadius.md,
-  },
-  buttonCancel: {
-    backgroundColor: Colors.inputBackground,
-  },
-  buttonSave: {
-    backgroundColor: Colors.primary,
-  },
-  buttonText: {
-    color: Colors.text,
-    fontSize: FontSizes.lg,
-    fontWeight: '500',
-  },
-});
+function createStyles(colors: typeof ThemeColors.light) {
+  return StyleSheet.create({
+    overlay: {
+      flex: 1,
+      backgroundColor: colors.background === '#fff' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.7)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    content: {
+      backgroundColor: colors.cardBackground,
+      borderRadius: BorderRadius.lg,
+      padding: Spacing.xxl,
+      width: '85%',
+      maxWidth: 400,
+    },
+    title: {
+      color: colors.text,
+      fontSize: FontSizes.xxl,
+      fontWeight: 'bold',
+      marginBottom: Spacing.xl,
+    },
+    label: {
+      color: colors.text,
+      fontSize: FontSizes.base,
+      marginBottom: Spacing.sm,
+      marginTop: Spacing.md,
+    },
+    input: {
+      backgroundColor: colors.inputBackground,
+      color: colors.text,
+      fontSize: FontSizes.lg,
+      padding: Spacing.md,
+      borderRadius: BorderRadius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    buttons: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      gap: Spacing.md,
+      marginTop: Spacing.xxl,
+    },
+    button: {
+      paddingHorizontal: Spacing.xl,
+      paddingVertical: Spacing.md + 2,
+      borderRadius: BorderRadius.md,
+    },
+    buttonCancel: {
+      backgroundColor: colors.inputBackground,
+    },
+    buttonSave: {
+      backgroundColor: colors.primary,
+    },
+    buttonText: {
+      color: colors.text,
+      fontSize: FontSizes.lg,
+      fontWeight: '500',
+    },
+  });
+}
 

@@ -1,6 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import type { Entry } from '@/src/db/schema';
+import { useThemeColors } from '@/src/hooks/useThemeColors';
+import { Colors as ThemeColors } from '@/constants/theme';
 
 interface EntryRowProps {
   entry: Entry;
@@ -9,6 +12,9 @@ interface EntryRowProps {
 }
 
 export function EntryRow({ entry, onEdit, onDelete }: EntryRowProps) {
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
+
   const handlePress = () => {
     if (onEdit) {
       onEdit(entry);
@@ -55,7 +61,7 @@ export function EntryRow({ entry, onEdit, onDelete }: EntryRowProps) {
         style={styles.content}
         onPress={handlePress}
         onLongPress={handleLongPress}
-        android_ripple={{ color: '#333' }}
+        android_ripple={{ color: colors.border }}
       >
         <Text style={styles.name}>{entry.name}</Text>
         <Text style={styles.calories}>{entry.calories} cal</Text>
@@ -63,7 +69,7 @@ export function EntryRow({ entry, onEdit, onDelete }: EntryRowProps) {
       <Pressable
         style={styles.deleteButton}
         onPress={handleDelete}
-        android_ripple={{ color: '#f87171' }}
+        android_ripple={{ color: colors.error }}
       >
         <Text style={styles.deleteButtonText}>×</Text>
       </Pressable>
@@ -71,43 +77,45 @@ export function EntryRow({ entry, onEdit, onDelete }: EntryRowProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
-  },
-  content: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
-  name: {
-    color: '#fff',
-    fontSize: 16,
-    flex: 1,
-  },
-  calories: {
-    color: '#aaa',
-    fontSize: 14,
-    marginRight: 8,
-  },
-  deleteButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    minWidth: 44,
-  },
-  deleteButtonText: {
-    color: '#f87171',
-    fontSize: 24,
-    fontWeight: '300',
-    lineHeight: 24,
-  },
-});
+function createStyles(colors: typeof ThemeColors.light) {
+  return StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderBottomWidth: 1,
+      borderBottomColor: colors.divider,
+    },
+    content: {
+      flex: 1,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+    },
+    name: {
+      color: colors.text,
+      fontSize: 16,
+      flex: 1,
+    },
+    calories: {
+      color: colors.textSecondary,
+      fontSize: 14,
+      marginRight: 8,
+    },
+    deleteButton: {
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      justifyContent: 'center',
+      alignItems: 'center',
+      minWidth: 44,
+    },
+    deleteButtonText: {
+      color: colors.error,
+      fontSize: 24,
+      fontWeight: '300',
+      lineHeight: 24,
+    },
+  });
+}
 

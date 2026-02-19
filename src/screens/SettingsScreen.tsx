@@ -85,13 +85,13 @@ function createStyles(colors: typeof ThemeColors.light) {
       justifyContent: 'space-between',
       alignItems: 'center',
       padding: 16,
-      backgroundColor: colors.inputBackground,
+      backgroundColor: colors.background === '#fff' ? '#f5f5f5' : colors.inputBackground,
       borderRadius: 8,
       borderWidth: 1,
       borderColor: colors.border,
     },
     optionSelected: {
-      backgroundColor: colors.background === '#fff' ? '#e3f2fd' : '#1a3a5a',
+      backgroundColor: colors.background === '#fff' ? 'rgba(10, 126, 164, 0.15)' : 'rgba(74, 158, 255, 0.2)',
       borderColor: colors.primary,
     },
     optionText: {

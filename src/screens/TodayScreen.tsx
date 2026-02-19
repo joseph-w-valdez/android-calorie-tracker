@@ -2,6 +2,8 @@ import { AddEntryModal } from '@/src/components/AddEntryModal';
 import { EntryRow } from '@/src/components/EntryRow';
 import type { Entry } from '@/src/db/schema';
 import { useDay } from '@/src/hooks/useDay';
+import { useThemeColors } from '@/src/hooks/useThemeColors';
+import { Colors as ThemeColors } from '@/constants/theme';
 import { getTodayLocal, parseDateLocal } from '@/src/utils/dateUtils';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -20,6 +22,8 @@ interface TodayScreenProps {
 
 export function TodayScreen({ date }: TodayScreenProps = {}) {
   const router = useRouter();
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
   // Use provided date or default to today
   const selectedDate = date || getTodayLocal();
   const { entries, caloriesIn, caloriesOut, net, weight, addEntry, updateEntry, deleteEntry, updateWeight } = useDay(selectedDate);
@@ -168,132 +172,134 @@ export function TodayScreen({ date }: TodayScreenProps = {}) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 100,
-  },
-  header: {
-    padding: 20,
-    paddingTop: 60,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  dateText: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: '600',
-    flex: 1,
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#2a2a2a',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  backButtonText: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: '300',
-    lineHeight: 20,
-  },
-  weightContainer: {
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
-  },
-  label: {
-    color: '#aaa',
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  weightInput: {
-    backgroundColor: '#1a1a1a',
-    color: '#fff',
-    fontSize: 16,
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-  netContainer: {
-    padding: 30,
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
-  },
-  netLabel: {
-    color: '#aaa',
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  netValue: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
-  netNegative: {
-    color: '#4ade80', // Green
-  },
-  netPositive: {
-    color: '#f87171', // Red
-  },
-  netBreakdown: {
-    flexDirection: 'row',
-    gap: 20,
-  },
-  breakdownText: {
-    color: '#666',
-    fontSize: 14,
-  },
-  section: {
-    marginTop: 20,
-    paddingHorizontal: 20,
-  },
-  sectionTitle: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 12,
-  },
-  emptyText: {
-    color: '#666',
-    fontSize: 14,
-    fontStyle: 'italic',
-    paddingVertical: 20,
-  },
-  addButton: {
-    position: 'absolute',
-    right: 20,
-    bottom: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#4a9eff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-  addButtonText: {
-    color: '#fff',
-    fontSize: 32,
-    fontWeight: '300',
-    lineHeight: 32,
-  },
-});
+function createStyles(colors: typeof ThemeColors.light) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      paddingBottom: 100,
+    },
+    header: {
+      padding: 20,
+      paddingTop: 60,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.divider,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    dateText: {
+      color: colors.text,
+      fontSize: 20,
+      fontWeight: '600',
+      flex: 1,
+    },
+    backButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: colors.inputBackground,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    backButtonText: {
+      color: colors.text,
+      fontSize: 20,
+      fontWeight: '300',
+      lineHeight: 20,
+    },
+    weightContainer: {
+      padding: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.divider,
+    },
+    label: {
+      color: colors.textSecondary,
+      fontSize: 14,
+      marginBottom: 8,
+    },
+    weightInput: {
+      backgroundColor: colors.cardBackground,
+      color: colors.text,
+      fontSize: 16,
+      padding: 12,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    netContainer: {
+      padding: 30,
+      alignItems: 'center',
+      borderBottomWidth: 1,
+      borderBottomColor: colors.divider,
+    },
+    netLabel: {
+      color: colors.textSecondary,
+      fontSize: 14,
+      marginBottom: 8,
+    },
+    netValue: {
+      fontSize: 48,
+      fontWeight: 'bold',
+      marginBottom: 12,
+    },
+    netNegative: {
+      color: colors.statGood,
+    },
+    netPositive: {
+      color: colors.statBad,
+    },
+    netBreakdown: {
+      flexDirection: 'row',
+      gap: 20,
+    },
+    breakdownText: {
+      color: colors.textTertiary,
+      fontSize: 14,
+    },
+    section: {
+      marginTop: 20,
+      paddingHorizontal: 20,
+    },
+    sectionTitle: {
+      color: colors.text,
+      fontSize: 18,
+      fontWeight: '600',
+      marginBottom: 12,
+    },
+    emptyText: {
+      color: colors.textTertiary,
+      fontSize: 14,
+      fontStyle: 'italic',
+      paddingVertical: 20,
+    },
+    addButton: {
+      position: 'absolute',
+      right: 20,
+      bottom: 20,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: colors.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+      elevation: 8,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 4,
+    },
+    addButtonText: {
+      color: '#fff',
+      fontSize: 32,
+      fontWeight: '300',
+      lineHeight: 32,
+    },
+  });
+}
 

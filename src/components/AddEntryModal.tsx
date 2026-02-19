@@ -8,7 +8,10 @@ import {
   Pressable,
   Alert,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import type { Entry } from '@/src/db/schema';
+import { useThemeColors } from '@/src/hooks/useThemeColors';
+import { Colors as ThemeColors } from '@/constants/theme';
 import { validateRequired, validatePositiveNumber } from '@/src/utils/validators';
 
 interface AddEntryModalProps {
@@ -20,6 +23,8 @@ interface AddEntryModalProps {
 }
 
 export function AddEntryModal({ visible, onClose, onSubmit, onDelete, entry }: AddEntryModalProps) {
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
   const [type, setType] = useState<'food' | 'exercise'>('food');
   const [name, setName] = useState('');
   const [calories, setCalories] = useState('');
@@ -122,7 +127,7 @@ export function AddEntryModal({ visible, onClose, onSubmit, onDelete, entry }: A
             value={name}
             onChangeText={setName}
             placeholder="Enter name"
-            placeholderTextColor="#666"
+            placeholderTextColor={colors.textTertiary}
             autoFocus
           />
 
@@ -133,7 +138,7 @@ export function AddEntryModal({ visible, onClose, onSubmit, onDelete, entry }: A
             value={calories}
             onChangeText={setCalories}
             placeholder="Enter calories"
-            placeholderTextColor="#666"
+            placeholderTextColor={colors.textTertiary}
             keyboardType="numeric"
           />
 
@@ -157,99 +162,101 @@ export function AddEntryModal({ visible, onClose, onSubmit, onDelete, entry }: A
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modal: {
-    backgroundColor: '#1a1a1a',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    paddingBottom: 40,
-  },
-  title: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  typeContainer: {
-    flexDirection: 'row',
-    marginBottom: 20,
-    gap: 10,
-  },
-  typeButton: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    backgroundColor: '#2a2a2a',
-    alignItems: 'center',
-  },
-  typeButtonActive: {
-    backgroundColor: '#4a9eff',
-  },
-  typeButtonText: {
-    color: '#aaa',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  typeButtonTextActive: {
-    color: '#fff',
-  },
-  label: {
-    color: '#fff',
-    fontSize: 14,
-    marginBottom: 8,
-    marginTop: 12,
-  },
-  input: {
-    backgroundColor: '#2a2a2a',
-    color: '#fff',
-    fontSize: 16,
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 12,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 20,
-  },
-  button: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  deleteButton: {
-    backgroundColor: '#2a1a1a',
-    borderWidth: 1,
-    borderColor: '#f87171',
-  },
-  deleteButtonText: {
-    color: '#f87171',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  cancelButton: {
-    backgroundColor: '#2a2a2a',
-  },
-  cancelButtonText: {
-    color: '#aaa',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  submitButton: {
-    backgroundColor: '#4a9eff',
-  },
-  submitButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
+function createStyles(colors: typeof ThemeColors.light) {
+  return StyleSheet.create({
+    overlay: {
+      flex: 1,
+      backgroundColor: colors.background === '#fff' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'flex-end',
+    },
+    modal: {
+      backgroundColor: colors.cardBackground,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      padding: 20,
+      paddingBottom: 40,
+    },
+    title: {
+      color: colors.text,
+      fontSize: 24,
+      fontWeight: 'bold',
+      marginBottom: 20,
+    },
+    typeContainer: {
+      flexDirection: 'row',
+      marginBottom: 20,
+      gap: 10,
+    },
+    typeButton: {
+      flex: 1,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: 8,
+      backgroundColor: colors.inputBackground,
+      alignItems: 'center',
+    },
+    typeButtonActive: {
+      backgroundColor: colors.primary,
+    },
+    typeButtonText: {
+      color: colors.textSecondary,
+      fontSize: 16,
+      fontWeight: '500',
+    },
+    typeButtonTextActive: {
+      color: '#fff',
+    },
+    label: {
+      color: colors.text,
+      fontSize: 14,
+      marginBottom: 8,
+      marginTop: 12,
+    },
+    input: {
+      backgroundColor: colors.inputBackground,
+      color: colors.text,
+      fontSize: 16,
+      padding: 12,
+      borderRadius: 8,
+      marginBottom: 12,
+    },
+    buttonContainer: {
+      flexDirection: 'row',
+      gap: 12,
+      marginTop: 20,
+    },
+    button: {
+      flex: 1,
+      paddingVertical: 14,
+      borderRadius: 8,
+      alignItems: 'center',
+    },
+    deleteButton: {
+      backgroundColor: colors.background === '#fff' ? '#ffe8e8' : '#2a1a1a',
+      borderWidth: 1,
+      borderColor: colors.error,
+    },
+    deleteButtonText: {
+      color: colors.error,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    cancelButton: {
+      backgroundColor: colors.inputBackground,
+    },
+    cancelButtonText: {
+      color: colors.textSecondary,
+      fontSize: 16,
+      fontWeight: '500',
+    },
+    submitButton: {
+      backgroundColor: colors.primary,
+    },
+    submitButtonText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: '600',
+    },
+  });
+}
 

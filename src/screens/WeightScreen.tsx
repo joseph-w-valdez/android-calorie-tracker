@@ -15,9 +15,15 @@ import { useWeightTrend } from '@/src/hooks/useWeightTrend';
 import { useTargetWeight } from '@/src/hooks/useTargetWeight';
 import { WeightChart } from '@/src/components/WeightChart';
 import { WeightCalendar } from '@/src/components/WeightCalendar';
+import { WeightModal } from '@/src/components/ui/WeightModal';
+import { useThemeColors } from '@/src/hooks/useThemeColors';
+import { Colors as ThemeColors } from '@/constants/theme';
+import { db } from '@/src/db/database';
 import { getTodayLocal, parseDateLocal } from '@/src/utils/dateUtils';
 
 export function WeightScreen() {
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
   const today = getTodayLocal();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { weight, updateWeight } = useDay(today, refreshTrigger);
@@ -44,7 +50,6 @@ export function WeightScreen() {
   const [targetDateInput, setTargetDateInput] = useState(targetDate || '');
   const [weightModalVisible, setWeightModalVisible] = useState(false);
   const [weightModalDate, setWeightModalDate] = useState<string | null>(null);
-  const [weightModalInput, setWeightModalInput] = useState('');
   const [weightModalCurrentWeight, setWeightModalCurrentWeight] = useState<number | null>(null);
 
   // Sync weight input with database value
@@ -81,27 +86,44 @@ export function WeightScreen() {
   const handleWeightDatePress = (date: string, currentWeight: number | null) => {
     setWeightModalDate(date);
     setWeightModalCurrentWeight(currentWeight);
-    setWeightModalInput(currentWeight?.toString() || '');
     setWeightModalVisible(true);
   };
 
-  const handleSetWeightForDate = () => {
+  const handleSetWeightForDate = (weight: number) => {
     if (!weightModalDate) return;
-    const num = parseFloat(weightModalInput);
-    if (isNaN(num) || num <= 0) {
-      Alert.alert('Error', 'Please enter a valid weight');
-      return;
+    
+    try {
+      // Check if day exists, create if not
+      const existingDays = db.getAllSync<{ id: string }>(
+        'SELECT id FROM days WHERE date = ?',
+        [weightModalDate]
+      );
+      
+      if (existingDays.length > 0) {
+        // Update existing day
+        db.runSync('UPDATE days SET weight = ? WHERE date = ?', [weight, weightModalDate]);
+      } else {
+        // Create new day with weight
+        const dayId = `day_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        db.runSync('INSERT INTO days (id, date, weight) VALUES (?, ?, ?)', [dayId, weightModalDate, weight]);
+      }
+      
+      // Refresh weight data
+      setWeightRefreshKey(prev => prev + 1);
+      setRefreshTrigger(prev => prev + 1);
+      
+      // If it's today, also update the local state
+      if (weightModalDate === today) {
+        updateWeight(weight);
+      }
+      
+      setWeightModalVisible(false);
+      setWeightModalDate(null);
+      setWeightModalCurrentWeight(null);
+    } catch (error) {
+      console.error('Error saving weight:', error);
+      Alert.alert('Error', 'Failed to save weight');
     }
-    // Use the useDay hook for the specific date
-    // For now, we'll update today's weight if it's today, otherwise we'd need a different approach
-    if (weightModalDate === today) {
-      updateWeight(num);
-    } else {
-      // For historical dates, we'd need to implement a separate function
-      // For now, just show an alert
-      Alert.alert('Info', 'Historical weight editing will be available soon');
-    }
-    setWeightModalVisible(false);
   };
 
   const formatDate = (dateString: string) => {
@@ -259,200 +281,115 @@ export function WeightScreen() {
         </View>
       </Modal>
 
-      {/* Weight Date Modal */}
-      <Modal
+      {/* Weight Edit Modal */}
+      <WeightModal
         visible={weightModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setWeightModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              Weight for {weightModalDate ? formatDate(weightModalDate) : ''}
-            </Text>
-            <Text style={styles.modalLabel}>Weight (lbs)</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={weightModalInput}
-              onChangeText={setWeightModalInput}
-              placeholder="Enter weight"
-              placeholderTextColor="#666"
-              keyboardType="numeric"
-            />
-            <View style={styles.modalButtons}>
-              <Pressable
-                style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={() => setWeightModalVisible(false)}
-              >
-                <Text style={styles.modalButtonText}>Cancel</Text>
-              </Pressable>
-              <Pressable
-                style={[styles.modalButton, styles.modalButtonSave]}
-                onPress={handleSetWeightForDate}
-              >
-                <Text style={styles.modalButtonText}>Save</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => {
+          setWeightModalVisible(false);
+          setWeightModalDate(null);
+          setWeightModalCurrentWeight(null);
+        }}
+        onSave={handleSetWeightForDate}
+        currentWeight={weightModalCurrentWeight}
+        date={weightModalDate || null}
+      />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 32,
-  },
-  header: {
-    marginBottom: 24,
-  },
-  headerTitle: {
-    color: '#fff',
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    color: '#aaa',
-    fontSize: 14,
-  },
-  card: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  cardTitle: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  editText: {
-    color: '#4a9eff',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  weightInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  weightInput: {
-    flex: 1,
-    backgroundColor: '#2a2a2a',
-    color: '#fff',
-    fontSize: 18,
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-  weightUnit: {
-    color: '#aaa',
-    fontSize: 16,
-  },
-  targetValue: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  targetDateText: {
-    color: '#aaa',
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  targetProgressText: {
-    color: '#4ade80',
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  targetWeeklyRateText: {
-    color: '#aaa',
-    fontSize: 14,
-  },
-  placeholderText: {
-    color: '#666',
-    fontSize: 14,
-    fontStyle: 'italic',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    padding: 24,
-    width: '85%',
-    maxWidth: 400,
-  },
-  modalTitle: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  modalDescription: {
-    color: '#aaa',
-    fontSize: 14,
-    marginBottom: 20,
-  },
-  modalLabel: {
-    color: '#fff',
-    fontSize: 14,
-    marginBottom: 8,
-    marginTop: 12,
-  },
-  modalInput: {
-    backgroundColor: '#2a2a2a',
-    color: '#fff',
-    fontSize: 16,
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 12,
-    marginTop: 24,
-  },
-  modalButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  modalButtonCancel: {
-    backgroundColor: '#2a2a2a',
-  },
-  modalButtonSave: {
-    backgroundColor: '#4a9eff',
-  },
-  modalButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-});
+function createStyles(colors: typeof ThemeColors.light) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      padding: 16,
+      paddingBottom: 32,
+    },
+    header: {
+      marginBottom: 24,
+    },
+    headerTitle: {
+      color: colors.text,
+      fontSize: 28,
+      fontWeight: 'bold',
+      marginBottom: 4,
+    },
+    headerSubtitle: {
+      color: colors.textSecondary,
+      fontSize: 14,
+    },
+    card: {
+      backgroundColor: colors.cardBackground,
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 16,
+    },
+    cardHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    cardTitle: {
+      color: colors.text,
+      fontSize: 18,
+      fontWeight: '600',
+    },
+    editText: {
+      color: colors.primary,
+      fontSize: 14,
+      fontWeight: '500',
+    },
+    weightInputContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    weightInput: {
+      flex: 1,
+      backgroundColor: colors.inputBackground,
+      color: colors.text,
+      fontSize: 18,
+      padding: 12,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    weightUnit: {
+      color: colors.textSecondary,
+      fontSize: 16,
+    },
+    targetValue: {
+      color: colors.text,
+      fontSize: 24,
+      fontWeight: 'bold',
+      marginBottom: 8,
+    },
+    targetDateText: {
+      color: colors.textSecondary,
+      fontSize: 14,
+      marginBottom: 8,
+    },
+    targetProgressText: {
+      color: colors.success,
+      fontSize: 16,
+      fontWeight: '500',
+      marginBottom: 4,
+    },
+    targetWeeklyRateText: {
+      color: colors.textSecondary,
+      fontSize: 14,
+    },
+    placeholderText: {
+      color: colors.textTertiary,
+      fontSize: 14,
+      fontStyle: 'italic',
+    },
+  });
+}
 

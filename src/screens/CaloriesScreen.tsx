@@ -13,12 +13,16 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useDay } from '@/src/hooks/useDay';
 import { useTrend } from '@/src/hooks/useTrend';
 import { useBMR } from '@/src/hooks/useBMR';
+import { useThemeColors } from '@/src/hooks/useThemeColors';
+import { Colors as ThemeColors } from '@/constants/theme';
 import { TrendChart } from '@/src/components/TrendChart';
 import { Calendar } from '@/src/components/Calendar';
 import { AddEntryModal } from '@/src/components/AddEntryModal';
 import { getTodayLocal, parseDateLocal } from '@/src/utils/dateUtils';
 
 export function CaloriesScreen() {
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
   const today = getTodayLocal();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { entries, caloriesIn, caloriesOut, net, addEntry } = useDay(today, refreshTrigger);
@@ -191,166 +195,107 @@ export function CaloriesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 32,
-  },
-  header: {
-    marginBottom: 24,
-  },
-  headerTitle: {
-    color: '#fff',
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    color: '#aaa',
-    fontSize: 14,
-  },
-  card: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  cardTitle: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 12,
-  },
-  editText: {
-    color: '#4a9eff',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  summaryStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 16,
-  },
-  statItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  statLabel: {
-    color: '#aaa',
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  statValue: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  statGood: {
-    color: '#4ade80',
-  },
-  statBad: {
-    color: '#f87171',
-  },
-  statDivider: {
-    width: 1,
-    backgroundColor: '#333',
-    marginHorizontal: 8,
-  },
-  ctaButton: {
-    backgroundColor: '#4a9eff',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  ctaButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  bmrValue: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  placeholderText: {
-    color: '#666',
-    fontSize: 14,
-    fontStyle: 'italic',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    padding: 24,
-    width: '85%',
-    maxWidth: 400,
-  },
-  modalTitle: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  modalDescription: {
-    color: '#aaa',
-    fontSize: 14,
-    marginBottom: 20,
-  },
-  modalLabel: {
-    color: '#fff',
-    fontSize: 14,
-    marginBottom: 8,
-    marginTop: 12,
-  },
-  modalInput: {
-    backgroundColor: '#2a2a2a',
-    color: '#fff',
-    fontSize: 16,
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 12,
-    marginTop: 24,
-  },
-  modalButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  modalButtonCancel: {
-    backgroundColor: '#2a2a2a',
-  },
-  modalButtonSave: {
-    backgroundColor: '#4a9eff',
-  },
-  modalButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-});
+function createStyles(colors: typeof ThemeColors.light) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      padding: 16,
+      paddingBottom: 32,
+    },
+    header: {
+      marginBottom: 24,
+    },
+    headerTitle: {
+      color: colors.text,
+      fontSize: 28,
+      fontWeight: 'bold',
+      marginBottom: 4,
+    },
+    headerSubtitle: {
+      color: colors.textSecondary,
+      fontSize: 14,
+    },
+    card: {
+      backgroundColor: colors.cardBackground,
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 16,
+    },
+    cardHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    cardTitle: {
+      color: colors.text,
+      fontSize: 18,
+      fontWeight: '600',
+      marginBottom: 12,
+    },
+    editText: {
+      color: colors.primary,
+      fontSize: 14,
+      fontWeight: '500',
+    },
+    summaryStats: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      marginBottom: 16,
+    },
+    statItem: {
+      alignItems: 'center',
+      flex: 1,
+    },
+    statLabel: {
+      color: colors.textSecondary,
+      fontSize: 12,
+      marginBottom: 4,
+    },
+    statValue: {
+      color: colors.text,
+      fontSize: 20,
+      fontWeight: 'bold',
+    },
+    statGood: {
+      color: colors.statGood,
+    },
+    statBad: {
+      color: colors.statBad,
+    },
+    statDivider: {
+      width: 1,
+      backgroundColor: colors.divider,
+      marginHorizontal: 8,
+    },
+    ctaButton: {
+      backgroundColor: colors.primary,
+      paddingVertical: 12,
+      paddingHorizontal: 24,
+      borderRadius: 8,
+      alignItems: 'center',
+    },
+    ctaButtonText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    bmrValue: {
+      color: colors.text,
+      fontSize: 24,
+      fontWeight: 'bold',
+    },
+    placeholderText: {
+      color: colors.textTertiary,
+      fontSize: 14,
+      fontStyle: 'italic',
+    },
+  });
+}
 

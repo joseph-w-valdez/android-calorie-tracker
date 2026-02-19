@@ -1,3 +1,5 @@
+import { Colors as ThemeColors } from '@/constants/theme';
+import { useThemeColors } from '@/src/hooks/useThemeColors';
 import type { TrendDay } from '@/src/hooks/useTrend';
 import { parseDateLocal } from '@/src/utils/dateUtils';
 import React from 'react';
@@ -14,9 +16,10 @@ interface BarProps {
   isEmpty: boolean;
   value: number;
   date: string; // Date string (YYYY-MM-DD) for short date display
+  colors: typeof ThemeColors.light;
 }
 
-function Bar({ height, isPositive, isEmpty, value }: BarProps) {
+function Bar({ height, isPositive, isEmpty, value, colors }: BarProps) {
   const CHART_HEIGHT = 200; // Match chartContainer height
   const CENTER_Y = CHART_HEIGHT / 2; // 100px
   const BMR_LINE_Y = CENTER_Y - 0.5; // 99.5px (matches BMR line position)
@@ -24,16 +27,45 @@ function Bar({ height, isPositive, isEmpty, value }: BarProps) {
   // Calculate bar height in pixels
   const barHeightPx = (height / 100) * CHART_HEIGHT;
   
+  const barStyles = {
+    barWrapper: {
+      flex: 1,
+      alignItems: 'stretch' as const,
+      height: '100%' as const,
+      justifyContent: 'center' as const,
+    },
+    barContainer: {
+      width: '80%' as const,
+      height: '100%' as const,
+      position: 'relative' as const,
+      alignSelf: 'center' as const,
+    },
+    bar: {
+      width: '100%' as const,
+      position: 'absolute' as const,
+      borderRadius: 2,
+    },
+    barPositive: {
+      backgroundColor: colors.statBad,
+    },
+    barNegative: {
+      backgroundColor: colors.statGood,
+    },
+    barEmpty: {
+      backgroundColor: colors.background === '#fff' ? '#d0d0d0' : '#555',
+    },
+  };
+
   if (isEmpty) {
     // Empty bar: small gray bar centered on BMR line
     const barHeight = 7; // Increased from 4px to 7px for better visibility
     return (
-      <View style={styles.barWrapper}>
-        <View style={styles.barContainer}>
+      <View style={barStyles.barWrapper}>
+        <View style={barStyles.barContainer}>
           <View
             style={[
-              styles.bar,
-              styles.barEmpty,
+              barStyles.bar,
+              barStyles.barEmpty,
               {
                 position: 'absolute',
                 top: BMR_LINE_Y - barHeight / 2, // Center on BMR line
@@ -52,12 +84,12 @@ function Bar({ height, isPositive, isEmpty, value }: BarProps) {
     // Positive: red bar going up from center
     // Bottom edge touches the BMR line
     return (
-      <View style={styles.barWrapper}>
-        <View style={styles.barContainer}>
+      <View style={barStyles.barWrapper}>
+        <View style={barStyles.barContainer}>
           <View
             style={[
-              styles.bar,
-              styles.barPositive,
+              barStyles.bar,
+              barStyles.barPositive,
               {
                 position: 'absolute',
                 top: BMR_LINE_Y - barHeightPx, // Bottom edge touches BMR line
@@ -78,12 +110,12 @@ function Bar({ height, isPositive, isEmpty, value }: BarProps) {
     // Negative: green bar going down from center
     // Top edge touches the BMR line
     return (
-      <View style={styles.barWrapper}>
-        <View style={styles.barContainer}>
+      <View style={barStyles.barWrapper}>
+        <View style={barStyles.barContainer}>
           <View
             style={[
-              styles.bar,
-              styles.barNegative,
+              barStyles.bar,
+              barStyles.barNegative,
               {
                 position: 'absolute',
                 top: BMR_LINE_Y, // Top edge touches BMR line
@@ -104,6 +136,9 @@ function Bar({ height, isPositive, isEmpty, value }: BarProps) {
 }
 
 export function TrendChart({ data, bmr }: TrendChartProps) {
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
+
   if (data.length === 0) {
     return (
       <View style={styles.container}>
@@ -136,7 +171,7 @@ export function TrendChart({ data, bmr }: TrendChartProps) {
       <View style={styles.header}>
         <Text style={styles.title}>7-Day Calorie Trend</Text>
         <Text style={[styles.summary, isDeficit ? styles.summaryGood : styles.summaryBad]}>
-          Average Net Calories: {Math.round(avgNet)}
+          Avg Net Calories: {Math.round(avgNet)}
         </Text>
       </View>
 
@@ -156,7 +191,7 @@ export function TrendChart({ data, bmr }: TrendChartProps) {
 
         <View style={styles.chartContainer}>
           {/* BMR center line - positioned at true center (100px from top for 200px chart) */}
-          <View style={styles.bmrLine} />
+          <View style={[styles.bmrLine, { backgroundColor: colors.background === '#fff' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.3)' }]} />
           
           {/* Vertical separator lines between bars - create dashed effect */}
           {data.map((day, index) => {
@@ -190,6 +225,7 @@ export function TrendChart({ data, bmr }: TrendChartProps) {
                       {
                         top: i * (dashHeight + dashGap),
                         height: dashHeight,
+                        backgroundColor: colors.background === '#fff' ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.2)',
                       },
                     ]}
                   />
@@ -221,6 +257,7 @@ export function TrendChart({ data, bmr }: TrendChartProps) {
                   isEmpty={!hasEntries}
                   value={difference}
                   date={day.date}
+                  colors={colors}
                 />
               );
             })}
@@ -260,168 +297,168 @@ export function TrendChart({ data, bmr }: TrendChartProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  title: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  summary: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  summaryGood: {
-    color: '#4ade80',
-  },
-  summaryBad: {
-    color: '#f87171',
-  },
-  chartWrapper: {
-    marginBottom: 16,
-  },
-  labelsTopContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    marginBottom: 4,
-  },
-  labelTopWrapper: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  labelsBottomContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    marginTop: 4,
-  },
-  labelBottomWrapper: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  chartContainer: {
-    height: 200,
-    position: 'relative',
-    backgroundColor: '#2a2a2a',
-    borderRadius: 8,
-    overflow: 'hidden',
-  },
-  barsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    height: '100%',
-  },
-  bmrLine: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 100, // Exactly at center of 200px chart (matches CENTER_Y in Bar component)
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)', // White with 30% opacity
-    zIndex: 0, // Lower z-index so bars appear on top
-    marginTop: -0.5, // Center the 1px line perfectly
-  },
-  separatorContainer: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    width: 1,
-    zIndex: 0,
-  },
-  separatorDash: {
-    position: 'absolute',
-    left: 0,
-    width: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  barWrapper: {
-    flex: 1,
-    alignItems: 'stretch',
-    height: '100%',
-    justifyContent: 'center',
-  },
-  barContainer: {
-    width: '80%',
-    height: '100%',
-    position: 'relative',
-    alignSelf: 'center',
-  },
-  bar: {
-    width: '100%',
-    position: 'absolute',
-    borderRadius: 2,
-  },
-  barPositive: {
-    backgroundColor: '#f87171',
-  },
-  barNegative: {
-    backgroundColor: '#4ade80',
-  },
-  barEmpty: {
-    backgroundColor: '#555',
-  },
-  weekdayLabel: {
-    color: '#aaa',
-    fontSize: 10,
-    marginBottom: 4,
-  },
-  dateLabel: {
-    color: '#666',
-    fontSize: 9,
-    marginTop: 4,
-  },
-  valueLabel: {
-    fontSize: 11,
-    marginTop: 2,
-    fontWeight: '500',
-  },
-  valuePositive: {
-    color: '#f87171',
-  },
-  valueNegative: {
-    color: '#4ade80',
-  },
-  valueEmpty: {
-    color: '#666',
-  },
-  legend: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 16,
-    flexWrap: 'wrap',
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  legendColor: {
-    width: 12,
-    height: 12,
-    borderRadius: 2,
-  },
-  bmrLegendLine: {
-    backgroundColor: '#666',
-    borderRadius: 0,
-    height: 1,
-    width: 12,
-  },
-  legendText: {
-    color: '#aaa',
-    fontSize: 12,
-  },
-  emptyText: {
-    color: '#666',
-    fontSize: 14,
-    textAlign: 'center',
-    padding: 20,
-  },
-});
+function createStyles(colors: typeof ThemeColors.light) {
+  return StyleSheet.create({
+    container: {
+      padding: 16,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 16,
+    },
+    title: {
+      color: colors.text,
+      fontSize: 18,
+      fontWeight: '600',
+    },
+    summary: {
+      fontSize: 14,
+      fontWeight: '500',
+    },
+    summaryGood: {
+      color: colors.statGood,
+    },
+    summaryBad: {
+      color: colors.statBad,
+    },
+    chartWrapper: {
+      marginBottom: 16,
+    },
+    labelsTopContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-evenly',
+      marginBottom: 4,
+    },
+    labelTopWrapper: {
+      flex: 1,
+      alignItems: 'center',
+    },
+    labelsBottomContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-evenly',
+      marginTop: 4,
+    },
+    labelBottomWrapper: {
+      flex: 1,
+      alignItems: 'center',
+    },
+    chartContainer: {
+      height: 200,
+      position: 'relative',
+      backgroundColor: colors.background === '#fff' ? '#f5f5f5' : colors.inputBackground,
+      borderRadius: 8,
+      overflow: 'hidden',
+    },
+    barsContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-evenly',
+      height: '100%',
+    },
+    bmrLine: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      top: 100, // Exactly at center of 200px chart (matches CENTER_Y in Bar component)
+      height: 1,
+      zIndex: 0, // Lower z-index so bars appear on top
+      marginTop: -0.5, // Center the 1px line perfectly
+    },
+    separatorContainer: {
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      width: 1,
+      zIndex: 0,
+    },
+    separatorDash: {
+      position: 'absolute',
+      left: 0,
+      width: 1,
+    },
+    barWrapper: {
+      flex: 1,
+      alignItems: 'stretch',
+      height: '100%',
+      justifyContent: 'center',
+    },
+    barContainer: {
+      width: '80%',
+      height: '100%',
+      position: 'relative',
+      alignSelf: 'center',
+    },
+    bar: {
+      width: '100%',
+      position: 'absolute',
+      borderRadius: 2,
+    },
+    barPositive: {
+      backgroundColor: colors.statBad,
+    },
+    barNegative: {
+      backgroundColor: colors.statGood,
+    },
+    barEmpty: {
+      backgroundColor: colors.background === '#fff' ? '#d0d0d0' : '#555',
+    },
+    weekdayLabel: {
+      color: colors.textSecondary,
+      fontSize: 10,
+      marginBottom: 4,
+    },
+    dateLabel: {
+      color: colors.textTertiary,
+      fontSize: 9,
+      marginTop: 4,
+    },
+    valueLabel: {
+      fontSize: 11,
+      marginTop: 2,
+      fontWeight: '500',
+    },
+    valuePositive: {
+      color: colors.statBad,
+    },
+    valueNegative: {
+      color: colors.statGood,
+    },
+    valueEmpty: {
+      color: colors.textTertiary,
+    },
+    legend: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      gap: 16,
+      flexWrap: 'wrap',
+    },
+    legendItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    legendColor: {
+      width: 12,
+      height: 12,
+      borderRadius: 2,
+    },
+    bmrLegendLine: {
+      backgroundColor: colors.textTertiary,
+      borderRadius: 0,
+      height: 1,
+      width: 12,
+    },
+    legendText: {
+      color: colors.textSecondary,
+      fontSize: 12,
+    },
+    emptyText: {
+      color: colors.textTertiary,
+      fontSize: 14,
+      textAlign: 'center',
+      padding: 20,
+    },
+  });
+}
 
