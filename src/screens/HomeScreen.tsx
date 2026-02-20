@@ -19,6 +19,7 @@ import { useWeightTrend } from '@/src/hooks/useWeightTrend';
 import { formatDateFull, formatDateShort } from '@/src/utils/dateFormatters';
 import { getTodayLocal, parseDateLocal } from '@/src/utils/dateUtils';
 import { useFocusEffect } from '@react-navigation/native';
+import * as Linking from 'expo-linking';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -78,6 +79,26 @@ export function HomeScreen() {
   const [bmrModalVisible, setBmrModalVisible] = useState(false);
   const [weightInput, setWeightInput] = useState(weight?.toString() || '');
   const [targetModalVisible, setTargetModalVisible] = useState(false);
+
+  // Handle deep links from widget to open add entry modal
+  useEffect(() => {
+    const subscription = Linking.addEventListener('url', (event) => {
+      if (event.url.includes('add-entry')) {
+        setModalVisible(true);
+      }
+    });
+
+    // Check if app was opened from a deep link
+    Linking.getInitialURL().then((url) => {
+      if (url && url.includes('add-entry')) {
+        setModalVisible(true);
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   // Sync weight input with database value
   useEffect(() => {
